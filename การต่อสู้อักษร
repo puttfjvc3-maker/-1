@@ -1,0 +1,846 @@
+-- ==================== 🛡️ Guard ป้องกันรันซ้ำ ====================
+if getgenv().ThaiLettersLoaded then
+    local pg = game:GetService("Players").LocalPlayer:FindFirstChild("PlayerGui")
+    if pg then
+        for _, name in ipairs({"ThaiLettersGui", "CopyToast"}) do
+            local old = pg:FindFirstChild(name)
+            if old then old:Destroy() end
+        end
+    end
+end
+getgenv().ThaiLettersLoaded = true
+
+local Rayfield = loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
+
+local Players = game:GetService("Players")
+local LocalPlayer = Players.LocalPlayer
+local UserInputService = game:GetService("UserInputService")
+local TweenService = game:GetService("TweenService")
+local playerGui = LocalPlayer:WaitForChild("PlayerGui")
+
+local MAX_PICK = 3
+local LETTERS = {}
+for _, c in ipairs({
+	"ก","ข","ฃ","ค","ฅ","ฆ","ง","จ","ฉ","ช","ซ","ฌ","ญ","ฎ","ฏ","ฐ","ฑ","ฒ","ณ",
+	"ด","ต","ถ","ท","ธ","น","บ","ป","ผ","ฝ","พ","ฟ","ภ","ม","ย","ร","ล","ว","ศ","ษ",
+	"ส","ห","ฬ","อ","ฮ"}) do
+	table.insert(LETTERS, c)
+end
+
+local WORDS_OLD = [[
+ไก่ กระต่าย กุ้ง ควาย ช้าง งู จิ้งจก จระเข้ ฉลาม ปลา ปู ผีเสื้อ ผึ้ง ม้า แมว มังกร ยีราฟ ลิง เสือ สุนัข หมู หมา หอย หนอน วัว นก นกฮูก กระรอก กวาง กระทิง แกะ แพะ ลา อูฐ หมี หมาป่า สิงโต แรด ค้างคาว เต่า กบ ปลาไหล ปลาหมึก ปลาโลมา วาฬ แมงมุม ยุง มด ตั๊กแตน เป็ด ห่าน เหยี่ยว อินทรี
+กล้วย มะม่วง ทุเรียน ส้ม มะนาว มะพร้าว องุ่น แตงโม แตงกวา ฝรั่ง ชมพู่ ลำไย ลิ้นจี่ เงาะ มังคุด ขนุน สับปะรด มะละกอ ส้มโอ ทับทิม พุทรา มะขาม ละมุด ฟักทอง มะเขือเทศ ผักบุ้ง ผักกาด แครอท หัวหอม กระเทียม พริก ขิง ข่า ตะไคร้ ใบเตย กะเพรา เห็ด ข้าวโพด มันฝรั่ง เผือก ข้าว ก๋วยเตี๋ยว ส้มตำ ต้มยำ ผัดไทย ขนมจีน ข้าวมันไก่ น้ำพริก ไข่เจียว ไข่ต้ม หมูทอด ไก่ย่าง ขนมปัง เค้ก เนย นมสด ไอศกรีม ช็อกโกแลต กาแฟ ชา น้ำผึ้ง
+บ้าน ประตู หน้าต่าง บันได ห้องนอน ห้องครัว ห้องน้ำ โต๊ะ เก้าอี้ ตู้เย็น เตียง หมอน ผ้าห่ม พัดลม โทรทัศน์ โทรศัพท์ กระจก นาฬิกา ร่ม หมวก รองเท้า ถุงเท้า เสื้อ กางเกง กระโปรง แปรงสีฟัน ยาสีฟัน สบู่ แชมพู หวี กรรไกร มีด ช้อน ส้อม จาน ชาม ถ้วย แก้ว ขวด หม้อ กระทะ กุญแจ หลังคา ผนัง พื้น รั้ว สวน ระเบียง พรม โคมไฟ เทียน เตา กระเป๋า แว่นตา สร้อยคอ แหวน เข็มขัด ถุงมือ
+โรงเรียน ครู นักเรียน หนังสือ สมุด ดินสอ ปากกา ยางลบ ไม้บรรทัด กระดานดำ ห้องเรียน การบ้าน การสอบ คะแนน ภาษาไทย ภาษาอังกฤษ คณิตศาสตร์ วิทยาศาสตร์ ประวัติศาสตร์ ภูมิศาสตร์ ศิลปะ ดนตรี ห้องสมุด มหาวิทยาลัย นักศึกษา อาจารย์ ปริญญา ตัวอักษร พยัญชนะ สระ วรรณยุกต์ ประโยค คำศัพท์ การศึกษา ความรู้ บทเรียน
+ภูเขา แม่น้ำ ทะเล มหาสมุทร ทะเลสาบ น้ำตก ป่าไม้ ทุ่งนา ท้องฟ้า ดวงอาทิตย์ ดวงจันทร์ ดวงดาว เมฆ ฝน ฟ้าร้อง ฟ้าแลบ สายฟ้า พายุ หิมะ ภูเขาไฟ แผ่นดินไหว ถ้ำ หาดทราย เกาะ อ่าว คลื่น ต้นไม้ ใบไม้ ดอกไม้ กิ่งไม้ รากไม้ หญ้า ดอกกุหลาบ ดอกบัว ดอกมะลิ ธรรมชาติ สิ่งแวดล้อม อากาศ ฤดูร้อน ฤดูฝน ฤดูหนาว ทะเลทราย ทุ่งหญ้า ป่า น้ำท่วม ภัยแล้ง หมอก น้ำค้าง รุ้ง สายรุ้ง ลม
+พ่อ แม่ พี่ น้อง ลูก หลาน ปู่ ย่า ตา ยาย ลุง ป้า น้า อา เพื่อน ครอบครัว ญาติ เด็ก ผู้ใหญ่ ผู้ชาย ผู้หญิง หมอ พยาบาล ตำรวจ ทหาร ชาวนา ชาวประมง พ่อค้า แม่ค้า นักร้อง นักเขียน นักบิน นักกีฬา วิศวกร สถาปนิก ทนายความ นักวิทยาศาสตร์ นักข่าว คนขับรถ นักดนตรี นักแสดง ศิลปิน จิตรกร เกษตรกร นักธุรกิจ ผู้จัดการ เลขานุการ ข้าราชการ ผู้พิพากษา นักการเมือง นายกรัฐมนตรี พระมหากษัตริย์ พระราชา ราชินี พระสงฆ์ สามเณร ครูใหญ่ ทารก วัยรุ่น หนุ่ม สาว
+ความสุข ความรัก ความฝัน ความจริง ความดี ความงาม ความคิด ความหวัง ความกลัว ความโกรธ ความเศร้า ความสามัคคี ความซื่อสัตย์ ความอดทน ความพยายาม สุขภาพ ชีวิต จิตใจ หัวใจ สมอง ปัญญา ศีลธรรม คุณธรรม เสรีภาพ สันติภาพ ประชาธิปไตย กฎหมาย ยุติธรรม รัฐบาล ประเทศ ประชาชน สังคม วัฒนธรรม ประเพณี ศาสนา เศรษฐกิจ การเมือง เทคโนโลยี อุตสาหกรรม เกษตรกรรม ธุรกิจ ธนาคาร บริษัท ความสำเร็จ ปรัชญา ศรัทธา ศักดิ์ศรี เกียรติยศ คุณค่า คุณภาพ ปัญหา วินัย ระเบียบ กฎ สิทธิ หน้าที่ อำนาจ รัฐธรรมนูญ เศรษฐี การค้า การลงทุน หุ้น ภาษี รายได้ รายจ่าย เงินเดือน กำไร ขาดทุน ราคา สินค้า บริการ
+โรงพยาบาล ตลาด ร้านอาหาร โรงแรม สนามบิน สถานีรถไฟ สวนสาธารณะ สวนสัตว์ พิพิธภัณฑ์ วัด โบสถ์ มัสยิด ศาล สถานีตำรวจ ไปรษณีย์ ซูเปอร์มาร์เก็ต ห้างสรรพสินค้า โรงภาพยนตร์ สนามกีฬา สระว่ายน้ำ ท่าเรือ จังหวัด อำเภอ ตำบล หมู่บ้าน เมือง ถนน ตรอก ซอย สี่แยก สะพาน อุโมงค์ ทางด่วน ไฟจราจร ร้านค้า ร้านขายยา ร้านหนังสือ ร้านกาแฟ ธนาคาร สำนักงาน โรงงาน ฟาร์ม ไร่ นา สวนผลไม้ ศูนย์การค้า โรงละคร ปราสาท พระราชวัง กำแพง เจดีย์ อนุสาวรีย์ น้ำพุ สุสาน รีสอร์ต หอพัก คอนโดมิเนียม ตึก อาคาร
+รถ รถยนต์ รถไฟ รถเมล์ รถจักรยานยนต์ จักรยาน เรือ เรือใบ เรือประมง เรือสำเภา เครื่องบิน เฮลิคอปเตอร์ จรวด ยานอวกาศ รถบรรทุก รถแท็กซี่ รถตู้ รถพยาบาล รถดับเพลิง รถถัง รถแทรกเตอร์ เรือดำน้ำ บอลลูน ร่มชูชีพ รถราง รถไฟฟ้า หมวกกันน็อก ยางรถยนต์ พวงมาลัย เบรก น้ำมันเชื้อเพลิง ป้ายทะเบียน
+กิน ดื่ม นอน เดิน วิ่ง กระโดด ว่ายน้ำ ร้องเพลง เต้นรำ อ่าน เขียน วาดภาพ พูด ฟัง มอง เห็น ได้ยิน หัวเราะ ร้องไห้ ยิ้ม ซื้อ ขาย ทำงาน พักผ่อน เดินทาง ท่องเที่ยว ช่วยเหลือ เรียนรู้ สอน คิด จำ ลืม รัก เกลียด โกรธ กลัว ดีใจ เสียใจ สวย น่ารัก ฉลาด ขยัน สูง ต่ำ ใหญ่ เล็ก ยาว สั้น หนัก เบา ร้อน เย็น อบอุ่น หนาว สะอาด สกปรก เร็ว ช้า ใหม่ เก่า ง่าย ยาก ถูก แพง อร่อย หวาน เปรี้ยว เค็ม เผ็ด ขม จืด หอม เหม็น ดัง เงียบ สว่าง มืด สนุก เบื่อ เหนื่อย หิว อิ่ม ง่วง ขอบคุณ ขอโทษ สวัสดี ยินดี
+หัว ผม หน้า ตา หู จมูก ปาก ฟัน ลิ้น คอ ไหล่ แขน มือ นิ้ว เล็บ อก ท้อง หลัง เอว ขา เข่า เท้า ปอด ตับ ไต กระดูก กล้ามเนื้อ เลือด ผิวหนัง หน้าผาก คิ้ว ขนตา แก้ม คาง ฝ่ามือ ฝ่าเท้า ข้อมือ ข้อเท้า นิ้วมือ นิ้วเท้า หัวเข่า ต้นขา น่อง สะโพก หน้าอก กะโหลก ลำไส้ กระเพาะ เส้นผม เส้นเลือด ฟันกราม เหงือก
+วัน เดือน ปี สัปดาห์ เช้า สาย เที่ยง บ่าย เย็น ค่ำ กลางคืน กลางวัน เมื่อวาน วันนี้ พรุ่งนี้ ชั่วโมง นาที วินาที วันจันทร์ วันอังคาร วันพุธ วันพฤหัสบดี วันศุกร์ วันเสาร์ วันอาทิตย์ มกราคม กุมภาพันธ์ มีนาคม เมษายน พฤษภาคม มิถุนายน กรกฎาคม สิงหาคม กันยายน ตุลาคม พฤศจิกายน ธันวาคม สีแดง สีเขียว สีเหลือง สีฟ้า สีขาว สีดำ สีส้ม สีม่วง สีชมพู สีน้ำตาล สีเทา สีน้ำเงิน หนึ่ง สอง สาม สี่ ห้า หก เจ็ด แปด เก้า สิบ ร้อย พัน หมื่น แสน ล้าน ศูนย์ วันเกิด วันหยุด ปีใหม่ ตรุษจีน ลอยกระทง วันแม่ วันพ่อ วันเด็ก ฤดูกาล อดีต ปัจจุบัน อนาคต
+ฟุตบอล บาสเกตบอล วอลเลย์บอล แบดมินตัน เทนนิส มวยไทย ตะกร้อ มาราธอน ปิงปอง กอล์ฟ ดนตรี เพลง กีตาร์ เปียโน ไวโอลิน กลอง ขลุ่ย ระนาด ฉิ่ง ฉาบ ซออู้ จะเข้ ละคร ภาพยนตร์ ภาพวาด ภาพถ่าย ประติมากรรม การ์ตูน นิทาน นิยาย บทกวี กวี หนังสือพิมพ์ นิตยสาร ของเล่น ตุ๊กตา ลูกโป่ง ว่าว ลูกบอล เกม ปริศนา กีฬา นาฬิกา ฮีโร่ ฮิปโป ฮัลโหล ฮา นกฮูก ศิลปิน ภาพเขียน ลายเส้น สีน้ำ สีน้ำมัน พู่กัน กระดาษ หมากรุก ไพ่ ลูกเต๋า กระโดดเชือก ว่ายน้ำ ปีนเขา ตกปลา ล่องเรือ ขี่ม้า ขี่จักรยาน สเก็ต โยคะ
+คอมพิวเตอร์ อินเทอร์เน็ต โปรแกรม ข้อมูล แป้นพิมพ์ เมาส์ จอภาพ เครื่องพิมพ์ กล้อง วิดีโอ เครื่องคิดเลข หุ่นยนต์ ดาวเทียม กล้องโทรทรรศน์ ดาวเคราะห์ ดาวพฤหัสบดี ดาวอังคาร ดาวศุกร์ ดาวเสาร์ ดาวพุธ ดาวหาง ดาวตก ทางช้างเผือก จักรวาล ระบบสุริยะ อวกาศ นักบินอวกาศ ไฟฟ้า แบตเตอรี่ เครื่องยนต์ เครื่องจักร พลังงาน ฟิสิกส์ เคมี ชีววิทยา ไดโนเสาร์ ธาตุ อะตอม โมเลกุล แม่เหล็ก เลนส์ แว่นขยาย กล้องจุลทรรศน์ เทอร์โมมิเตอร์ ยา วัคซีน โรค หวัด ไข้ ปวดหัว หมอฟัน ปฐมพยาบาล ผ่าตัด สุขภาพ
+วิญญาณ เจริญ เชี่ยวชาญ อัญมณี ผู้ใหญ่ อนุญาต ภาษี ภาษา ภูมิศาสตร์ ภูมิอากาศ ภูมิปัญญา ภัย ภรรยา ภาค ภายใน ภายนอก ภาชนะ ภิกษุ ภัตตาคาร ภาระ เกษตร มนุษย์ พิเศษ วิเศษ รักษา ลักษณะ อักษร ยักษ์ พิษ วิทยาลัย วิทยุ วิทยาศาสตร์ วิชา วิธี วิเคราะห์ วิจารณ์ วิจัย วิ่ง มณฑล บัณฑิต คุณ คุณครู คุณธรรม กรุณา ประณีต ผู้เฒ่า วัฒนธรรม วุฒิ จุฬาลงกรณ์ สงกรานต์ พระอาทิตย์ พระจันทร์ พระเจ้า พระพุทธเจ้า พุทธศาสนา คริสต์ศาสนา อิสลาม ฮินดู ธรรม ธรรมะ ธูป เทียน ธง ธนู ธนบัตร ธิดา ธุระ ธัญพืช ธรณี ธารา
+]]local WORDS_NEW = [[
+รถไฟ รถยนต์ รถเมล์ รถบัส รถตู้ รถถัง รถจักร รถเข็น รถพ่วง รถแข่ง
+บ้าน บ้านพัก บ้านสวน บ้านนา บ้านเช่า บ้านเลขที่ โรงเรียน โรงงาน โรงแรม โรงพยาบาล
+กระเป๋า กระจก กระดาษ กระดาน กระต่าย กระท่อม กระทะ กระบอก กระถาง กระดิ่ง
+ดอกไม้ ดอกบัว ดอกกุหลาบ ดอกเข็ม ดอกหญ้า ดอกมะลิ ดอกจำปี ดอกจำปา ดอกทานตะวัน ดอกดาวเรือง
+น้ำปลา น้ำแข็ง น้ำตก น้ำใจ น้ำตา น้ำหวาน น้ำมัน น้ำผึ้ง น้ำพริก น้ำคลอง
+ไฟฟ้า ไฟฉาย ไฟแดง ไฟเขียว ไฟไหม้ ไฟป่า ไฟรถ ไฟบ้าน ไฟถนน ไฟประดับ
+โรงหนัง โรงพัก โรงครัว โรงสี โรงพิมพ์ โรงละคร โรงอาหาร โรงจอดรถ โรงรถ โรงเลี้ยง
+แม่น้ำ แม่บ้าน แม่ค้า แม่ครัว แม่เหล็ก แม่มด แม่ไก่ แม่วัว แม่ปลา แม่ทัพ
+พ่อค้า พ่อบ้าน พ่อครัว พ่อแม่ พ่อเลี้ยง พ่อพระ พ่อมด พ่อไก่ พ่อปลา พ่อหลวง
+ลูกบอล ลูกแมว ลูกหมา ลูกไก่ ลูกปลา ลูกเสือ ลูกแก้ว ลูกโป่ง ลูกอม ลูกชิ้น
+มะม่วง มะนาว มะพร้าว มะละกอ มะเขือ มะเขือเทศ มะขาม มะยม มะเฟือง มะกรูด
+กล้วย กล้วยไม้ กล้วยหอม กล้วยน้ำว้า ส้มโอ ส้มตำ ส้มเขียวหวาน แตงโม แตงกวา แตงไทย
+ข้าวสาร ข้าวเปลือก ข้าวเหนียว ข้าวต้ม ข้าวผัด ข้าวแกง ข้าวโพด ข้าวสวย ข้าวมัน ข้าวหลาม
+ปากกา ปากซอย ปากคลอง ปากน้ำ ปากทาง ปากถุง ปากขวด ปากแผล ปากเสียง ปากเป็ด
+ดินสอ ดินแดง ดินดำ ดินเหนียว ดินทราย ดินปืน ดินนา ดินสวน ดินโคลน ดินถล่ม
+ทะเล ทะเลสาบ ทะเลทราย ภูเขา ภูเขาไฟ ภูเขาหิน ภูเขาทอง
+น้ำทะเล น้ำคลอง น้ำบ่อ น้ำบาดาล น้ำฝน น้ำค้าง น้ำวน น้ำท่วม น้ำล้น น้ำขัง
+ปลาทู ปลาหมึก ปลาทอง ปลาช่อน ปลาดุก ปลานิล ปลาไหล ปลากัด ปลาสวาย ปลาเค็ม
+ไก่ทอด ไก่ย่าง ไก่ต้ม ไก่ชน ไก่ป่า ไก่แจ้ ไก่บ้าน ไก่ดำ ไก่ไข่ ไก่ฟ้า
+หมูป่า หมูย่าง หมูทอด หมูกรอบ หมูแดง หมูสับ หมูหวาน หมูปิ้ง หมูตุ๋น หมูเค็ม
+ไข่ไก่ ไข่เป็ด ไข่ต้ม ไข่ดาว ไข่เจียว ไข่เค็ม ไข่หวาน ไข่ตุ๋น ไข่ลวก ไข่ปลา
+แกงส้ม แกงเขียวหวาน แกงจืด แกงเผ็ด แกงป่า แกงไก่ แกงหมู แกงปลา แกงคั่ว แกงเลียง
+ขนมปัง ขนมครก ขนมจีน ขนมชั้น ขนมถ้วย ขนมตาล ขนมหม้อแกง ขนมเปียกปูน ขนมกล้วย ขนมเทียน
+เสื้อผ้า เสื้อยืด เสื้อกันหนาว เสื้อเชิ้ต เสื้อคลุม เสื้อกีฬา กางเกง กางเกงยีนส์
+รองเท้า รองเท้าผ้าใบ รองเท้าแตะ รองเท้าบูต ถุงเท้า ถุงมือ หมวกแก๊ป หมวกกันน็อก แว่นตา นาฬิกา
+โต๊ะเรียน โต๊ะกินข้าว เก้าอี้ เตียงนอน หมอน ผ้าห่ม ผ้าขนหนู ผ้าเช็ดหน้า ผ้าม่าน พรมเช็ดเท้า
+ตู้เย็น ตู้เสื้อผ้า ตู้หนังสือ ตู้กับข้าว พัดลม โทรทัศน์ โทรศัพท์ คอมพิวเตอร์ เครื่องซักผ้า เครื่องดูดฝุ่น
+ห้องนอน ห้องน้ำ ห้องครัว ห้องเรียน ห้องสมุด ห้องประชุม ห้องรับแขก ห้องอาหาร ห้องเก็บของ ห้องแต่งตัว
+สวนดอกไม้ สวนผลไม้ สวนสัตว์ สวนสาธารณะ สนามเด็กเล่น สนามฟุตบอล สนามบิน สนามกีฬา สนามหญ้า สนามแข่ง
+ถนนหลวง ถนนใหญ่ ถนนเล็ก ทางเดิน ทางรถไฟ ทางม้าลาย ทางด่วน ทางโค้ง ทางแยก ทางลัด
+ตลาดสด ตลาดนัด ตลาดน้ำ ตลาดเช้า ตลาดเย็น ร้านค้า ร้านอาหาร ร้านขายยา ร้านหนังสือ ร้านกาแฟ
+ต้นไม้ ต้นกล้วย ต้นมะม่วง ต้นมะพร้าว ต้นไผ่ ต้นสน ต้นข้าว ต้นหญ้า ต้นยาง ต้นสัก
+ใบไม้ ใบตอง ใบเตย ใบมะกรูด ใบโหระพา ใบกะเพรา ใบตำลึง ใบชะพลู ใบข่า ใบมะนาว
+ผีเสื้อ แมลงวัน แมลงสาบ แมลงปอ แมลงเต่าทอง แมงมุม แมงป่อง แมงกะพรุน แมงดาทะเล แมลงเม่า
+สุนัข แมว กระต่าย หนูนา หนูบ้าน ช้าง ม้า วัว ควาย แพะ
+แกะ หมู ลิง เสือ สิงโต หมี กวาง ยีราฟ ม้าลาย จิงโจ้
+นกแก้ว นกเขา นกยูง นกกระจอก นกพิราบ นกอินทรี นกกระยาง นกกระเรียน นกฮูก นกขุนทอง
+งูเห่า งูหลาม งูเหลือม งูเขียว งูจงอาง จระเข้ เต่า ตะกวด กิ้งก่า ตุ๊กแก
+กบ คางคก อึ่งอ่าง เขียด ปูทะเล ปูนา กุ้ง หอย ปลาหมึก
+ผึ้ง ต่อ แตน มดแดง มดดำ ยุงลาย ยุงก้นปล่อง จักจั่น จิ้งหรีด
+ตั๊กแตน ด้วง แมลงทับ แมลงปีกแข็ง ไส้เดือน ปลิง ทาก
+ท้องฟ้า ก้อนเมฆ สายรุ้ง แสงแดด แสงดาว ดวงจันทร์ ดวงอาทิตย์ หมอกควัน พายุฝน ลมหนาว
+นักเรียน นักศึกษา ครูใหญ่ ครูสอน หมอ พยาบาล ตำรวจ ทหาร ชาวนา ชาวสวน
+ชาวประมง พ่อค้า แม่ค้า คนขับรถ คนขายของ คนสวน ช่างไม้ ช่างไฟ ช่างภาพ ช่างยนต์
+นักบิน นักร้อง นักแสดง นักกีฬา นักเขียน นักวาด นักข่าว นักดนตรี นักวิทยาศาสตร์ นักฟุตบอล
+ผู้จัดการ ผู้กำกับ ผู้ช่วย ผู้โดยสาร ผู้ปกครอง ผู้ใหญ่ เด็กเล็ก เด็กชาย เด็กหญิง วัยรุ่น
+ครอบครัว พี่ชาย พี่สาว น้องชาย น้องสาว ปู่ย่า ตายาย ลุงป้า น้าอา ญาติพี่น้อง
+คำถาม คำตอบ ประโยค ตัวอักษร พยัญชนะ สระไทย วรรณยุกต์ ตัวเลข จำนวน การอ่าน
+การเขียน การพูด การฟัง การเรียน การสอน การสอบ คะแนน ความรู้ ความคิด ความจำ
+ความรัก ความสุข ความทุกข์ ความดี ความจริง ความฝัน ความหวัง ความกล้า ความกลัว ความโกรธ
+ความเศร้า ความสนุก ความสวย ความงาม ความเร็ว ความช้า ความสูง ความลึก ความกว้าง ความยาว
+แข็งแรง อ่อนแอ สดใส สวยงาม น่ารัก ใจดี ใจร้าย ใจเย็น ใจร้อน ขยัน
+ขี้เกียจ สนุกสนาน ร่าเริง เงียบสงบ ว่องไว รวดเร็ว เชื่องช้า อ่อนโยน สุภาพ ซื่อสัตย์
+วิ่งเร็ว เดินเล่น กระโดด นั่งลง ยืนตรง นอนหลับ ตื่นนอน กินข้าว ดื่มน้ำ อาบน้ำ
+ล้างมือ แปรงฟัน หวีผม แต่งตัว ทำงาน อ่านหนังสือ เขียนหนังสือ วาดรูป ร้องเพลง เต้นรำ
+เล่นเกม เล่นบอล เล่นน้ำ เล่นดนตรี ดูหนัง ดูทีวี ฟังเพลง ถ่ายรูป ปลูกต้นไม้ รดน้ำต้นไม้
+ทำอาหาร ล้างจาน กวาดบ้าน ถูบ้าน ซักผ้า รีดผ้า เก็บของ จัดห้อง เปิดประตู ปิดหน้าต่าง
+โทรศัพท์มือถือ โทรศัพท์บ้าน คอมพิวเตอร์ตั้งโต๊ะ โน้ตบุ๊ก แท็บเล็ต เครื่องพิมพ์ กล้องถ่ายรูป กล้องวิดีโอ
+หูฟัง ลำโพง ไมโครโฟน คีย์บอร์ด เมาส์ หน้าจอ อินเทอร์เน็ต เว็บไซต์ โปรแกรม แอปพลิเคชัน
+ไฟฉาย หลอดไฟ สายไฟ ปลั๊กไฟ แบตเตอรี่ ถ่านไฟฉาย เครื่องปรับอากาศ เครื่องทำน้ำอุ่น เตาแก๊ส เตาไฟฟ้า
+หม้อหุงข้าว กระทะไฟฟ้า เครื่องปั่น เครื่องปิ้งขนมปัง กาต้มน้ำ ไมโครเวฟ เครื่องดูดควัน เครื่องกรองน้ำ เครื่องชงกาแฟ เครื่องอบผ้า
+รถจักรยาน รถจักรยานยนต์ รถกระบะ รถบรรทุก รถพยาบาล รถดับเพลิง รถตำรวจ รถแข่ง รถไฟฟ้า รถราง
+เครื่องบิน เฮลิคอปเตอร์ เรือใบ เรือหางยาว เรือประมง เรือดำน้ำ เรือโดยสาร เรือสินค้า เรือสำราญ เรือแจว
+ฟุตบอล บาสเกตบอล วอลเลย์บอล แบดมินตัน เทนนิส ปิงปอง ว่ายน้ำ วิ่งแข่ง กระโดดสูง กระโดดไกล
+เหรียญทอง เหรียญเงิน เหรียญทองแดง ถ้วยรางวัล ชัยชนะ การแข่งขัน การฝึกซ้อม การออกกำลัง การเดินทาง การพักผ่อน
+ประเทศไทย ประเทศจีน ประเทศญี่ปุ่น ประเทศเกาหลี ประเทศอังกฤษ ประเทศฝรั่งเศส ประเทศอเมริกา ประเทศอินเดีย ประเทศลาว ประเทศกัมพูชา
+กรุงเทพมหานคร เชียงใหม่ เชียงราย ภูเก็ต ชลบุรี ขอนแก่น นครราชสีมา อุดรธานี สุราษฎร์ธานี สงขลา
+วัดพระแก้ว วัดอรุณ วัดโพธิ์ พระพุทธรูป พระสงฆ์ พระเจดีย์ โบสถ์ ศาลเจ้า ศาลากลาง พิพิธภัณฑ์
+ดนตรีไทย เพลงชาติ เพลงพื้นบ้าน เพลงลูกทุ่ง เพลงสากล เครื่องดนตรี กลองยาว กลองชุด กีตาร์ เปียโน
+ขลุ่ย ระนาด ซอด้วง ซออู้ ฉิ่ง ฉาบ ฆ้องวง แคน พิณ โหวด
+ภาพวาด ภาพถ่าย ภาพยนตร์ ภาพการ์ตูน ภาพสี ภาพขาวดำ งานศิลปะ งานประดิษฐ์ งานฝีมือ งานอดิเรก
+สีแดง สีเหลือง สีเขียว สีน้ำเงิน สีม่วง สีส้ม สีชมพู สีดำ สีขาว สีน้ำตาล
+ของเล่น ของขวัญ ของฝาก ของใช้ ของกิน ของหวาน ของสด ของแห้ง ของเก่า ของใหม่
+เครื่องเขียน เครื่องครัว เครื่องใช้ไฟฟ้า เครื่องมือ เครื่องประดับ เครื่องแต่งกาย เครื่องสำอาง เครื่องหมาย เครื่องแบบ เครื่องจักร
+แสงไฟ แสงเทียน แสงจันทร์ แสงอาทิตย์ แสงเหนือ เสียงเพลง เสียงหัวเราะ เสียงร้อง เสียงนก เสียงลม
+ความสะอาด ความปลอดภัย ความสามัคคี ความพยายาม ความสำเร็จ ความรับผิดชอบ ความอดทน ความเมตตา ความกตัญญู ความประหยัด
+มิตรภาพ ประสบการณ์ ประโยชน์ ประชาชน ประชาธิปไตย ธรรมชาติ สิ่งแวดล้อม ทรัพยากร พลังงาน เทคโนโลยี
+วิทยาศาสตร์ คณิตศาสตร์ ประวัติศาสตร์ ภูมิศาสตร์ เศรษฐศาสตร์ วัฒนธรรม ประเพณี ศาสนา การเกษตร การท่องเที่ยว
+]]local WORDS_NEW2 = [[
+รถไฟฟ้า รถจักรยาน รถจักรยานยนต์ รถพยาบาล รถดับเพลิง รถบรรทุก รถโดยสาร รถไฟใต้ดิน รถไฟความเร็วสูง รถเก็บขยะ
+เครื่องบินโดยสาร เครื่องบินรบ เฮลิคอปเตอร์ เรือดำน้ำ เรือประมง เรือโดยสาร เรือสำราญ เรือหางยาว
+โรงพยาบาล โรงเรียนอนุบาล โรงเรียนมัธยม โรงเรียนประถม โรงงานอุตสาหกรรม สถานีตำรวจ สถานีรถไฟ สถานีขนส่ง สถานีดับเพลิง
+ห้างสรรพสินค้า ศูนย์การค้า ร้านสะดวกซื้อ ร้านขายเครื่องเขียน ร้านขายเสื้อผ้า ร้านขายยา ร้านอาหารตามสั่ง ร้านกาแฟสด
+โทรศัพท์มือถือ คอมพิวเตอร์ตั้งโต๊ะ เครื่องซักผ้า เครื่องปรับอากาศ เครื่องดูดฝุ่น เครื่องทำน้ำอุ่น เครื่องกรองน้ำ เครื่องถ่ายเอกสาร เครื่องเล่นเกม เครื่องบันทึกเสียง
+กระเป๋านักเรียน กระเป๋าเดินทาง กระเป๋าสตางค์ รองเท้าผ้าใบ รองเท้ากีฬา หมวกกันน็อก แว่นกันแดด เสื้อกันหนาว เสื้อแขนยาว กางเกงขายาว
+ห้องรับประทานอาหาร ห้องประชุมใหญ่ ห้องวิทยาศาสตร์ ห้องคอมพิวเตอร์ ห้องสมุดประชาชน ห้องพยาบาล ห้องแต่งตัว ห้องเก็บสินค้า
+สนามเด็กเล่น สนามฟุตบอล สนามบาสเกตบอล สนามวอลเลย์บอล สนามกีฬาแห่งชาติ สนามแข่งรถ สวนสัตว์เปิด สวนพฤกษศาสตร์ สวนน้ำขนาดใหญ่
+ดอกทานตะวัน ดอกดาวเรือง ดอกกุหลาบ ดอกมะลิ ดอกกล้วยไม้ ดอกบัวหลวง ดอกอัญชัน ดอกพุดซ้อน ดอกจำปี ดอกกระเจียว
+ต้นมะพร้าว ต้นมะม่วง ต้นยางพารา ต้นสนทะเล ต้นไผ่รวก ต้นกล้วยน้ำว้า ต้นราชพฤกษ์ ต้นประดู่ ต้นสักทอง ต้นกระถิน
+แมลงเต่าทอง แมลงปีกแข็ง แมลงวันทอง แมลงปอเข็ม แมงกะพรุน แมงมุมยักษ์ ผีเสื้อกลางคืน ผีเสื้อหางติ่ง จิ้งหรีดทอง
+พระพุทธรูป พระมหากษัตริย์ พระราชวัง พระราชพิธี พระราชดำริ พระราชบัญญัติ พระเจดีย์ทอง พระบรมมหาราชวัง
+ประเทศไทย ประเทศญี่ปุ่น ประเทศเกาหลี ประเทศออสเตรเลีย ประเทศสหรัฐอเมริกา ประเทศฝรั่งเศส ประเทศเยอรมนี ประเทศอินโดนีเซีย
+วิทยาศาสตร์ คณิตศาสตร์ ประวัติศาสตร์ ภูมิศาสตร์ เศรษฐศาสตร์ เทคโนโลยี สิ่งแวดล้อม ทรัพยากรธรรมชาติ พลังงานไฟฟ้า ระบบสุริยะ
+ประชาธิปไตย วัฒนธรรมไทย ประเพณีพื้นบ้าน ภูมิปัญญาไทย การเกษตรกรรม การอุตสาหกรรม การคมนาคม การสื่อสาร การท่องเที่ยว
+ความรับผิดชอบ ความสามัคคี ความพยายาม ความประหยัด ความซื่อสัตย์ ความเมตตากรุณา ความภาคภูมิใจ ความคิดสร้างสรรค์ ความปลอดภัย
+นักวิทยาศาสตร์ นักโบราณคดี นักประวัติศาสตร์ นักคณิตศาสตร์ นักดาราศาสตร์ นักภูมิศาสตร์ นักออกแบบ นักประดิษฐ์ นักโภชนาการ นักจิตวิทยา
+ผู้ประกอบการ ผู้โดยสาร ผู้บัญชาการ ผู้บังคับบัญชา ผู้พิพากษา ผู้ประกาศข่าว ผู้กำกับภาพยนตร์ ผู้ช่วยพยาบาล
+รถไฟฟ้า รถโรงเรียน รถตำรวจ รถทหาร รถแข่ง รถบรรทุก รถดับเพลิง รถพ่วงข้าง รถเก็บขยะ รถขุดดิน
+กระดาษแข็ง กระดาษสี กระดาษทราย กระดาษชำระ กระดาษหนังสือพิมพ์ เครื่องเขียน เครื่องประดับ เครื่องแต่งกาย เครื่องหมายการค้า เครื่องมือช่าง
+รถจักรยานยนต์ รถไฟฟ้า รถไฟใต้ดิน รถไฟความเร็วสูง รถดับเพลิง รถพยาบาล รถบรรทุก รถเก็บขยะ รถไถนา รถเกี่ยวข้าว รถตู้โดยสาร รถประจำทาง รถแข่ง รถตำรวจ รถทหาร รถถัง รถกระบะ รถบรรทุกน้ำ รถบรรทุกสินค้า รถลากจูง
+เครื่องบินโดยสาร เครื่องบินเจ็ต เฮลิคอปเตอร์ เรือดำน้ำ เรือประมง เรือโดยสาร เรือสำราญ เรือหางยาว เรือบรรทุกสินค้า เรือกู้ภัย เรือใบ เรือแจว เรือข้ามฟาก เรือท่องเที่ยว
+โรงพยาบาล โรงเรียนอนุบาล โรงเรียนประถม โรงเรียนมัธยม โรงเรียนอาชีวะ โรงเรียนสอนภาษา โรงเรียนสอนดนตรี โรงงานอุตสาหกรรม โรงงานน้ำตาล โรงงานอาหาร โรงงานผลิตรถยนต์ โรงงานกระดาษ โรงงานสิ่งทอ
+สถานีตำรวจ สถานีรถไฟ สถานีขนส่ง สถานีดับเพลิง สถานีอนามัย สถานีโทรทัศน์ สถานีวิทยุ สถานีบริการน้ำมัน สถานีรถไฟฟ้า สถานีตรวจอากาศ
+ห้างสรรพสินค้า ศูนย์การค้า ตลาดสด ตลาดน้ำ ตลาดนัด ตลาดกลางคืน ร้านสะดวกซื้อ ร้านขายยา ร้านขายหนังสือ ร้านขายเครื่องเขียน ร้านขายเสื้อผ้า ร้านอาหาร ร้านอาหารทะเล ร้านกาแฟ ร้านเบเกอรี่ ร้านตัดผม ร้านซ่อมรถ
+กระเป๋านักเรียน กระเป๋าเดินทาง กระเป๋าสตางค์ กระเป๋าสะพาย กระเป๋าเป้ กระเป๋าเอกสาร กระเป๋าเครื่องมือ รองเท้าผ้าใบ รองเท้ากีฬา รองเท้าหนัง รองเท้าส้นสูง รองเท้าแตะ หมวกกันน็อก หมวกแก๊ป หมวกไหมพรม
+เสื้อกันหนาว เสื้อแขนยาว เสื้อแขนสั้น เสื้อยืดคอกลม เสื้อเชิ้ตแขนยาว เสื้อกีฬา เสื้อคลุมอาบน้ำ กางเกงขายาว กางเกงขาสั้น กางเกงกีฬา กางเกงยีนส์ กระโปรงนักเรียน ชุดนักเรียน ชุดกีฬา ชุดนอน ชุดว่ายน้ำ
+โทรศัพท์มือถือ โทรศัพท์บ้าน โทรศัพท์สาธารณะ คอมพิวเตอร์ตั้งโต๊ะ คอมพิวเตอร์พกพา เครื่องซักผ้า เครื่องอบผ้า เครื่องดูดฝุ่น เครื่องปรับอากาศ เครื่องทำน้ำอุ่น เครื่องกรองน้ำ เครื่องถ่ายเอกสาร เครื่องพิมพ์ เครื่องเล่นเกม เครื่องบันทึกเสียง เครื่องขยายเสียง เครื่องชงกาแฟ เครื่องปั่นน้ำผลไม้
+ห้องรับแขก ห้องรับประทานอาหาร ห้องประชุมใหญ่ ห้องวิทยาศาสตร์ ห้องคอมพิวเตอร์ ห้องสมุดประชาชน ห้องพยาบาล ห้องแต่งตัว ห้องเก็บสินค้า ห้องเก็บของ ห้องทดลอง ห้องประชาสัมพันธ์ ห้องปฏิบัติการ ห้องออกกำลังกาย ห้องเรียนพิเศษ
+สนามเด็กเล่น สนามฟุตบอล สนามบาสเกตบอล สนามวอลเลย์บอล สนามแบดมินตัน สนามกีฬาแห่งชาติ สนามแข่งรถ สนามบินนานาชาติ สนามมวยไทย สนามเทนนิส สนามกอล์ฟ สวนสัตว์เปิด สวนพฤกษศาสตร์ สวนน้ำขนาดใหญ่ สวนสนุกกลางแจ้ง
+ดอกทานตะวัน ดอกดาวเรือง ดอกกุหลาบ ดอกมะลิ ดอกกล้วยไม้ ดอกบัวหลวง ดอกอัญชัน ดอกพุดซ้อน ดอกจำปี ดอกกระเจียว ดอกลำดวน ดอกพิกุล ดอกเข็มแดง ดอกชบาแดง ดอกเฟื่องฟ้า ดอกบานชื่น ดอกบานไม่รู้โรย
+ต้นมะพร้าว ต้นมะม่วง ต้นยางพารา ต้นสนทะเล ต้นไผ่รวก ต้นกล้วยน้ำว้า ต้นราชพฤกษ์ ต้นประดู่ ต้นสักทอง ต้นกระถิน ต้นขนุน ต้นมะขาม ต้นมะนาว ต้นส้มโอ ต้นทุเรียน ต้นเงาะ ต้นลำไย ต้นลิ้นจี่
+แมลงเต่าทอง แมลงปีกแข็ง แมลงวันทอง แมลงปอเข็ม แมงกะพรุน แมงมุมยักษ์ ผีเสื้อกลางคืน ผีเสื้อหางติ่ง ผีเสื้อจักรพรรดิ จิ้งหรีดทอง ตั๊กแตนตำข้าว แมลงสาบบิน แมลงหวี่ขน แมลงเม่าไฟ
+สัตว์ป่าสงวน สัตว์เลี้ยงลูกด้วยนม สัตว์น้ำจืด สัตว์ทะเล สัตว์กินพืช สัตว์กินเนื้อ สัตว์ครึ่งบกครึ่งน้ำ สัตว์ไม่มีกระดูกสันหลัง สัตว์หายาก สัตว์ป่าคุ้มครอง
+พระพุทธรูป พระมหากษัตริย์ พระราชวัง พระราชพิธี พระราชดำริ พระราชบัญญัติ พระเจดีย์ทอง พระบรมมหาราชวัง พระไตรปิฎก พระสงฆ์ไทย พระเครื่อง พระธาตุพนม
+ประเทศไทย ประเทศญี่ปุ่น ประเทศเกาหลี ประเทศออสเตรเลีย ประเทศสหรัฐอเมริกา ประเทศฝรั่งเศส ประเทศเยอรมนี ประเทศอินโดนีเซีย ประเทศมาเลเซีย ประเทศสิงคโปร์ ประเทศเวียดนาม ประเทศฟิลิปปินส์ ประเทศนิวซีแลนด์
+วิทยาศาสตร์ คณิตศาสตร์ ประวัติศาสตร์ ภูมิศาสตร์ เศรษฐศาสตร์ เทคโนโลยี สิ่งแวดล้อม ทรัพยากรธรรมชาติ พลังงานไฟฟ้า ระบบสุริยะ ระบบนิเวศ ระบบประสาท ระบบย่อยอาหาร ระบบไหลเวียนโลหิต ระบบหายใจ
+ประชาธิปไตย วัฒนธรรมไทย ประเพณีพื้นบ้าน ภูมิปัญญาไทย การเกษตรกรรม การอุตสาหกรรม การคมนาคม การสื่อสาร การท่องเที่ยว การพัฒนา การศึกษา การปกครอง การอนุรักษ์ การประดิษฐ์ การทดลอง
+ความรับผิดชอบ ความสามัคคี ความพยายาม ความประหยัด ความซื่อสัตย์ ความเมตตากรุณา ความภาคภูมิใจ ความคิดสร้างสรรค์ ความปลอดภัย ความอดทน ความเสียสละ ความกตัญญู ความยุติธรรม ความมีน้ำใจ ความขยันหมั่นเพียร
+นักวิทยาศาสตร์ นักโบราณคดี นักประวัติศาสตร์ นักคณิตศาสตร์ นักดาราศาสตร์ นักภูมิศาสตร์ นักออกแบบ นักประดิษฐ์ นักโภชนาการ นักจิตวิทยา นักเศรษฐศาสตร์ นักสิ่งแวดล้อม นักกฎหมาย นักการเมือง นักธุรกิจ นักกีฬา นักแสดง นักเขียน นักข่าว
+ผู้ประกอบการ ผู้โดยสาร ผู้บัญชาการ ผู้บังคับบัญชา ผู้พิพากษา ผู้ประกาศข่าว ผู้กำกับภาพยนตร์ ผู้ช่วยพยาบาล ผู้จัดการโรงงาน ผู้ดูแลระบบ ผู้ตรวจสอบ ผู้แทนจำหน่าย ผู้ประสานงาน ผู้ฝึกสอน ผู้เชี่ยวชาญ
+ข้าวเหนียวมะม่วง ข้าวผัดกุ้ง ข้าวผัดปู ข้าวมันไก่ ข้าวหมูแดง ข้าวขาหมู ข้าวผัด
+]]
+
+-- ==================== รวม + ลบคำซ้ำทั้งหมด ====================
+local WORDS, seen = {}, {}
+local dupCount = 0
+local perSource = { OLD = 0, NEW = 0, NEW2 = 0 }
+
+local function addWords(text, label)
+	local added = 0
+	for w in string.gmatch(text, "%S+") do
+		if not seen[w] then
+			seen[w] = true
+			table.insert(WORDS, w)
+			added = added + 1
+		else
+			dupCount = dupCount + 1
+		end
+	end
+	if label then perSource[label] = added end
+end
+
+addWords(WORDS_OLD, "OLD")
+addWords(WORDS_NEW, "NEW")
+addWords(WORDS_NEW2, "NEW2")
+
+-- ==================== ฟังก์ชันค้นหา ====================
+local function search(picks)
+	if #picks == 0 then
+		return WORDS
+	end
+
+	local inOrder, anyOrder = {}, {}
+	for _, w in ipairs(WORDS) do
+		local ok, ordered = true, true
+		for _, p in ipairs(picks) do
+			if not string.find(w, p, 1, true) then ok = false break end
+		end
+		if ok then
+			local pos = 1
+			for _, p in ipairs(picks) do
+				local s, e = string.find(w, p, pos, true)
+				if not s then ordered = false break end
+				pos = e + 1
+			end
+			table.insert(ordered and inOrder or anyOrder, w)
+		end
+	end
+	for _, w in ipairs(anyOrder) do table.insert(inOrder, w) end
+	return inOrder
+end
+
+-- ==================== ระบบคัดลอกคลิปบอร์ด ====================
+local Clipboard = {
+	Enabled = true,
+	ShowToast = true,
+	ToastDuration = 1.5,
+	AutoClear = false,
+	ClearAfter = 30,
+	TestText = "ทดสอบคัดลอก",
+}
+
+local function copyToClipboard(text)
+	local ok, err = pcall(function()
+		if setclipboard then
+			setclipboard(text)
+		elseif toclipboard then
+			toclipboard(text)
+		elseif clipboard	error("Executor นี้ไม่มีฟังก์ชัน clipboard")
+		end
+	end)
+	return ok, errboardclip
+local C = {
+	bg = Color3.fromRGB(23, 42, 35),
+	panel = Color3.fromRGB(31, 56, 47),
+	btn = Color3.fromRGB(44, 74, 63),
+	on = Color3.fromRGB(31, 122, 92),
+	text = Color3.fromRGB(230, 243, 236),
+	accent = Color3.fromRGB(95, 207, 159),
+	close = Color3.fromRGB(180, 60, 60),
+	tab = Color3.fromRGB(70, 160, 120),
+	word = Color3.fromRGB(40, 90, 72),
+	wordHover = Color3.fromRGB(60, 140, 110),
+	copied = Color3.fromRGB(120, 200, 100),
+	toastBg = Color3.fromRGB(40, 90, 72),
+}
+
+local function corner(o, r)
+	Instance.new("UICorner", o).CornerRadius = UDim.new(0, r)
+end
+local function label(parent, props)
+	local l = Instance.new("TextLabel")
+	l.BackgroundTransparency = 1
+	l.Font = Enum.Font.SourceSans
+	l.TextColor3 = C.text
+	for k, v in pairs(props) do l[k] = v end
+	l.Parent = parent
+	return l
+end
+
+-- ==================== 📱 Toast แจ้งเตือน ====================
+local toastGui = Instance.new("ScreenGui")
+toastGui.Name = "CopyToast"
+toastGui.ResetOnSpawn = false
+toastGui.IgnoreGuiInset = true
+toastGui.DisplayOrder = 999
+toastGui.Parent = playerGui
+
+local toast = Instance.new("Frame")
+toast.Size = UDim2.new(1, -40, 0, 56)
+toast.AnchorPoint = Vector2.new(0.5, 1)
+toast.Position = UDim2.new(0.5, 0, 1, -30)
+toast.BackgroundColor3 = C.toastBg
+toast.BackgroundTransparency = 1
+toast.Visible = false
+toast.Parent = toastGui
+corner(toast, 14)
+
+local toastStroke = Instance.new("UIStroke", toast)
+toastStroke.Color = C.accent
+toastStroke.Thickness = 2
+toastStroke.Transparency = 1
+
+label(toast, {
+	Size = UDim2.fromOffset(40, 56),
+	Position = UDim2.fromOffset(8, 0),
+	Text = "✓", TextSize = 28, TextColor3 = C.accent, Font = Enum.Font.SourceSansBold,
+})
+
+label(toast, {
+	Size = UDim2.new(1, -60, 0, 26),
+	Position = UDim2.fromOffset(52, 6),
+	Text = "คัดลอกแล้ว", TextSize = 16, Font = Enum.Font.SourceSansBold,
+	TextXAlignment = Enum.TextXAlignment.Left,
+})
+
+local toastWord = label(toast, {
+	Size = UDim2.new(1, -60, 0, 22),
+	Position = UDim2.fromOffset(52, 28),
+	Text = "", TextSize = 14, TextColor3 = C.accent, TextTransparency = 0.2,
+	TextXAlignment = Enum.TextXAlignment.Left,
+})
+
+local toastTween, toastTask
+
+local function showToast(word)
+	if not Clipboard.ShowToast then return end
+	if toastTween then toastTween:Cancel() end
+	if toastTask then task.cancel(toastTask) end
+
+	toastWord.Text = word
+	toast.Visible = true
+	toast.BackgroundTransparency = 1
+	toastStroke.Transparency = 1
+	toast.Position = UDim2.new(0.5, 0, 1, 20)
+
+	toastTween = TweenService:Create(toast,
+		TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),
+		{ Position = UDim2.new(0.5, 0, 1, -30), BackgroundTransparency = 0.1 })
+	toastTween:Play()
+	TweenService:Create(toastStroke, TweenInfo.new(0.3), { Transparency = 0 }):Play()
+
+	toastTask = task.delay(Clipboard.ToastDuration, function()
+		local fadeOut = TweenService:Create(toast, TweenInfo.new(0.3),
+			{ Position = UDim2.new(0.5, 0, 1, 20), BackgroundTransparency = 1 })
+		fadeOut:Play()
+		TweenService:Create(toastStroke, TweenInfo.new(0.3), { Transparency = 1 }):Play()
+		fadeOut.Completed:Connect(function() toast.Visible = false end)
+	end)
+end
+-- ==================== 🪟 หน้าต่างหลัก ====================
+local gameGui = Instance.new("ScreenGui")
+gameGui.Name = "ThaiLettersGui"
+gameGui.ResetOnSpawn = false
+gameGui.IgnoreGuiInset = true
+gameGui.DisplayOrder = 998
+gameGui.Parent = playerGui
+
+-- ⭐ ปุ่มลอย "ก"
+local toggleBtn = Instance.new("TextButton")
+toggleBtn.Size = UDim2.fromOffset(56, 56)
+toggleBtn.Position = UDim2.new(1, -72, 0, 60)
+toggleBtn.BackgroundColor3 = C.accent
+toggleBtn.Text = "ก"
+toggleBtn.TextColor3 = Color3.fromRGB(20, 40, 30)
+toggleBtn.TextSize = 30
+toggleBtn.Font = Enum.Font.SourceSansBold
+toggleBtn.Parent = gameGui
+corner(toggleBtn, 28)
+local tgStroke = Instance.new("UIStroke", toggleBtn)
+tgStroke.Color = Color3.fromRGB(10, 20, 15)
+tgStroke.Thickness = 2
+
+local main = Instance.new("Frame")
+main.Size = UDim2.fromOffset(500, 280)
+main.AnchorPoint = Vector2.new(0.5, 0.5)
+main.Position = UDim2.fromScale(0.5, 0.5)
+main.BackgroundColor3 = C.bg
+main.BorderSizePixel = 0
+main.Visible = false
+main.Parent = gameGui
+corner(main, 14)
+
+local stroke = Instance.new("UIStroke", main)
+stroke.Color = C.tab
+stroke.Thickness = 2
+
+local header = Instance.new("Frame")
+header.Size = UDim2.new(1, 0, 0, 38)
+header.BackgroundColor3 = C.panel
+header.BorderSizePixel = 0
+header.Parent = main
+corner(header, 14)
+
+local headerFix = Instance.new("Frame")
+headerFix.Size = UDim2.new(1, 0, 0, 14)
+headerFix.Position = UDim2.new(0, 0, 1, -14)
+headerFix.BackgroundColor3 = C.panel
+headerFix.BorderSizePixel = 0
+headerFix.Parent = header
+
+label(header, {
+	Size = UDim2.new(1, -90, 1, 0),
+	Position = UDim2.fromOffset(12, 0),
+	Text = "📋 แตะคำเพื่อคัดลอก",
+	TextSize = 17, Font = Enum.Font.SourceSansBold,
+	TextXAlignment = Enum.TextXAlignment.Left,
+})
+
+local closeBtn = Instance.new("TextButton")
+closeBtn.Size = UDim2.fromOffset(30, 30)
+closeBtn.Position = UDim2.new(1, -40, 0, 4)
+closeBtn.BackgroundColor3 = C.close
+closeBtn.Text = "✕"
+closeBtn.TextColor3 = C.text
+closeBtn.TextSize = 16
+closeBtn.Font = Enum.Font.SourceSansBold
+closeBtn.Parent = header
+corner(closeBtn, 15)
+
+local content = Instance.new("Frame")
+content.Size = UDim2.new(1, -16, 1, -50)
+content.Position = UDim2.fromOffset(8, 44)
+content.BackgroundTransparency = 1
+content.Parent = main
+
+-- ==================== ซ้าย: ช่องค้นหา + ตัวอักษร ====================
+local leftPanel = Instance.new("Frame")
+leftPanel.Size = UDim2.new(0, 240, 1, 0)
+leftPanel.BackgroundColor3 = C.panel
+leftPanel.BorderSizePixel = 0
+leftPanel.Parent = content
+corner(leftPanel, 10)
+
+local searchBox = Instance.new("TextBox")
+searchBox.Size = UDim2.new(1, -16, 0, 32)
+searchBox.Position = UDim2.fromOffset(8, 8)
+searchBox.BackgroundColor3 = C.bg
+searchBox.PlaceholderText = "🔍 พิมพ์คำค้นหา..."
+searchBox.PlaceholderColor3 = Color3.fromRGB(150, 180, 165)
+searchBox.Text = ""
+searchBox.TextSize = 15
+searchBox.Font = Enum.Font.SourceSans
+searchBox.TextColor3 = C.text
+searchBox.ClearTextOnFocus = false
+searchBox.Parent = leftPanel
+corner(searchBox, 8)
+
+local searchStroke = Instance.new("UIStroke", searchBox)
+searchStroke.Color = C.accent
+searchStroke.Thickness = 1
+searchStroke.Transparency = 0.6
+
+local scroll = Instance.new("ScrollingFrame")
+scroll.Size = UDim2.new(1, -8, 1, -52)
+scroll.Position = UDim2.fromOffset(4, 44)
+scroll.BackgroundTransparency = 1
+scroll.ScrollBarThickness = 5
+scroll.ScrollBarImageColor3 = C.accent
+scroll.AutomaticCanvasSize = Enum.AutomaticSize.Y
+scroll.CanvasSize = UDim2.new()
+scroll.Parent = leftPanel
+
+local grid = Instance.new("UIGridLayout")
+grid.CellSize = UDim2.fromOffset(40, 40)
+grid.CellPadding = UDim2.fromOffset(5, 5)
+grid.Parent = scroll
+
+-- ==================== ขวา: ผลลัพธ์ (แคบลง) ====================
+local rightPanel = Instance.new("Frame")
+rightPanel.Size = UDim2.new(1, -248, 1, 0)
+rightPanel.Position = UDim2.fromOffset(248, 0)
+rightPanel.BackgroundColor3 = C.panel
+rightPanel.BorderSizePixel = 0
+rightPanel.Parent = content
+corner(rightPanel, 10)
+
+local pickedRow = Instance.new("Frame")
+pickedRow.Size = UDim2.new(1, -12, 0, 40)
+pickedRow.Position = UDim2.fromOffset(6, 6)
+pickedRow.BackgroundTransparency = 1
+pickedRow.Parent = rightPanel
+
+local picked = label(pickedRow, {
+	Size = UDim2.new(1, -70, 1, 0),
+	Position = UDim2.fromOffset(4, 0),
+	Text = "-", TextSize = 26, TextColor3 = C.accent,
+	Font = Enum.Font.SourceSansBold,
+	TextXAlignment = Enum.TextXAlignment.Left,
+})
+
+local clear = Instance.new("TextButton")
+clear.Size = UDim2.fromOffset(64, 32)
+clear.Position = UDim2.new(1, -64, 0.5, -16)
+clear.Text = "ล้าง"
+clear.TextSize = 16
+clear.Font = Enum.Font.SourceSansBold
+clear.TextColor3 = C.text
+clear.BackgroundColor3 = C.btn
+clear.Parent = pickedRow
+corner(clear, 8)
+
+local status = label(rightPanel, {
+	Size = UDim2.new(1, -12, 0, 20),
+	Position = UDim2.fromOffset(8, 48),
+	Text = "แตะตัวอักษรหรือพิมพ์ค้นหา",
+	TextSize = 13, TextTransparency = 0.3,
+	TextXAlignment = Enum.TextXAlignment.Left,
+})
+
+local results = Instance.new("ScrollingFrame")
+results.Size = UDim2.new(1, -12, 1, -78)
+results.Position = UDim2.fromOffset(6, 72)
+results.BackgroundTransparency = 1
+results.ScrollBarThickness = 4
+results.ScrollBarImageColor3 = C.accent
+results.AutomaticCanvasSize = Enum.AutomaticSize.Y
+results.CanvasSize = UDim2.new()
+results.Parent = rightPanel
+
+local list = Instance.new("UIListLayout")
+list.Padding = UDim.new(0, 5)
+list.Parent = results
+
+-- ==================== ตรรกะ ====================
+local picks, buttons = {}, {}
+
+local function createWordButton(parent, word, order)
+	local btn = Instance.new("TextButton")
+	btn.Size = UDim2.new(1, -8, 0, 34)
+	btn.BackgroundColor3 = C.word
+	btn.Text = word
+	btn.TextSize = 18
+	btn.Font = Enum.Font.SourceSans
+	btn.TextColor3 = C.text
+	btn.TextXAlignment = Enum.TextXAlignment.Left
+	btn.LayoutOrder = order
+	btn.AutoButtonColor = false
+	btn.TextTruncate = Enum.TextTruncate.AtEnd
+	btn.TextWrapped = false
+	corner(btn, 8)
+
+	local pad = Instance.new("UIPadding", btn)
+	pad.PaddingLeft = UDim.new(0, 10)
+
+	local copyIcon = label(btn, {
+		Size = UDim2.fromOffset(30, 34),
+		Position = UDim2.new(1, -34, 0, 0),
+		Text = "📋", TextSize = 18,
+		TextXAlignment = Enum.TextXAlignment.Center,
+		TextTransparency = 0.3,
+	})
+
+	btn.MouseEnter:Connect(function() btn.BackgroundColor3 = C.wordHover end)
+	btn.MouseLeave:Connect(function() btn.BackgroundColor3 = C.word end)
+
+	btn.Activated:Connect(function()
+		if not Clipboard.Enabled then
+			Rayfield:Notify({ Title = "⚠️ ปิดอยู่", Content = "เปิดระบบคัดลอกในแท็บก่อน", Duration = 2 })
+			return
+		end
+
+		local ok, err = copyToClipboard(word)
+		if ok then
+			showToast(word)
+			btn.BackgroundColor3 = C.copied
+			copyIcon.Text = "✓"
+			copyIcon.TextTransparency = 0
+			copyIcon.TextColor3 = Color3.fromRGB(255, 255, 255)
+
+			task.delay(0.6, function()
+				btn.BackgroundColor3 = C.word
+				copyIcon.Text = "📋"
+				copyIcon.TextTransparency = 0.3
+				copyIcon.TextColor3 = C.text
+			end)
+
+			status.Text = "✅ คัดลอกแล้ว — ไปวางเองในช่อง"
+
+			if Clipboard.AutoClear then
+				task.delay(Clipboard.ClearAfter, function() copyToClipboard("") end)
+			end
+		else
+			Rayfield:Notify({ Title = "❌ คัดลอกไม่สำเร็จ", Content = tostring(err or "Executor ไม่รองรับ clipboard"), Duration = 3 })
+		end
+	end)
+
+	btn.Parent = parent
+	return btn
+end
+
+local function refresh()
+	for _, ch in ipairs(results:GetChildren()) do
+		if ch:IsA("TextButton") then ch:Destroy() end
+	end
+
+	for letter, btn in pairs(buttons) do
+		btn.BackgroundColor3 = table.find(picks, letter) and C.on or C.btn
+	end
+
+	local query = string.lower(searchBox.Text)
+
+	if #picks == 0 and query == "" then
+		picked.Text = "-"
+		status.Text = "แตะตัวอักษรหรือพิมพ์ค้นหา"
+		return
+	end
+
+	if #picks > 0 then
+		picked.Text = table.concat(picks, " + ")
+	else
+		picked.Text = "🔍 " .. query
+	end
+
+	local found = search(picks)
+
+	if query ~= "" then
+		local filtered = {}
+		for _, w in ipairs(found) do
+			if string.find(string.lower(w), query, 1, true) then
+				table.insert(filtered, w)
+			end
+		end
+		found = filtered
+	end
+
+	if #found > 0 then
+		status.Text = "พบ " .. #found .. " คำ (แตะเพื่อคัดลอก)"
+	else
+		status.Text = "ไม่พบคำ"
+	end
+
+	for i, w in ipairs(found) do
+		createWordButton(results, w, i)
+	end
+end
+
+searchBox:GetPropertyChangedSignal("Text"):Connect(function()
+	refresh()
+end)
+
+searchBox.FocusLost:Connect(function()
+	refresh()
+end)
+
+for i, letter in ipairs(LETTERS) do
+	local btn = Instance.new("TextButton")
+	btn.Text = letter
+	btn.TextSize = 24
+	btn.Font = Enum.Font.SourceSansBold
+	btn.TextColor3 = C.text
+	btn.BackgroundColor3 = C.btn
+	btn.LayoutOrder = i
+	btn.Parent = scroll
+	corner(btn, 8)
+	buttons[letter] = btn
+
+	btn.Activated:Connect(function()
+		local idx = table.find(picks, letter)
+		if idx then
+			table.remove(picks, idx)
+		else
+			if #picks >= MAX_PICK then table.remove(picks, 1) end
+			table.insert(picks, letter)
+		end
+		refresh()
+	end)
+end
+
+clear.Activated:Connect(function()
+	table.clear(picks)
+	refresh()
+end)
+-- ==================== เปิด/ปิด + ลาก ====================
+local function setVisible(v)
+	main.Visible = v
+	toggleBtn.Text = v and "✕" or "ก"
+	toggleBtn.BackgroundColor3 = v and C.close or C.accent
+	if v then refresh() end
+end
+
+closeBtn.Activated:Connect(function() setVisible(false) end)
+
+local toggleDragging, toggleMoved = false, false
+local tDragStart, tStartPos
+
+toggleBtn.InputBegan:Connect(function(input)
+	if input.UserInputType == Enum.UserInputType.MouseButton1
+		or input.UserInputType == Enum.UserInputType.Touch then
+		toggleDragging = true
+		toggleMoved = false
+		tDragStart = input.Position
+		tStartPos = toggleBtn.Position
+	end
+end)
+
+toggleBtn.InputEnded:Connect(function(input)
+	if input.UserInputType == Enum.UserInputType.MouseButton1
+		or input.UserInputType == Enum.UserInputType.Touch then
+		toggleDragging = false
+		if not toggleMoved then
+			setVisible(not main.Visible)
+		end
+	end
+end)
+
+UserInputService.InputChanged:Connect(function(input)
+	if toggleDragging and (input.UserInputType == Enum.UserInputType.MouseMovement
+		or input.UserInputType == Enum.UserInputType.Touch) then
+		local delta = input.Position - tDragStart
+		if math.abs(delta.X) + math.abs(delta.Y) > 5 then
+			toggleMoved = true
+		end
+		if toggleMoved then
+			toggleBtn.Position = UDim2.new(
+				tStartPos.X.Scale, tStartPos.X.Offset + delta.X,
+				tStartPos.Y.Scale, tStartPos.Y.Offset + delta.Y
+			)
+		end
+	end
+end)
+
+local mDragging, mDragStart, mStartPos = false, nil, nil
+header.InputBegan:Connect(function(input)
+	if input.UserInputType == Enum.UserInputType.MouseButton1
+		or input.UserInputType == Enum.UserInputType.Touch then
+		mDragging = true
+		mDragStart = input.Position
+		mStartPos = main.Position
+	end
+end)
+header.InputEnded:Connect(function(input)
+	if input.UserInputType == Enum.UserInputType.MouseButton1
+		or input.UserInputType == Enum.UserInputType.Touch then
+		mDragging = false
+	end
+end)
+UserInputService.InputChanged:Connect(function(input)
+	if mDragging and (input.UserInputType == Enum.UserInputType.MouseMovement
+		or input.UserInputType == Enum.UserInputType.Touch) then
+		local delta = input.Position - mDragStart
+		main.Position = UDim2.new(
+			mStartPos.X.Scale, mStartPos.X.Offset + delta.X,
+			mStartPos.Y.Scale, mStartPos.Y.Offset + delta.Y
+		)
+	end
+end)
+
+-- ==================== Rayfield Window ====================
+local Window = Rayfield:CreateWindow({
+	Name = "Thai Letters",
+	LoadingTitle = "กำลังโหลด...",
+	LoadingSubtitle = "โดย Rayfield UI",
+	ConfigurationSaving = { Enabled = false },
+	KeySystem = false
+})
+
+local CopyTab = Window:CreateTab("📋 คัดลอก", 4483362458)
+local InfoTab = Window:CreateTab("วิธีใช้", 4483362458)
+
+CopyTab:CreateSection("📋 ระบบคัดลอกคลิปบอร์ด")
+CopyTab:CreateLabel("แตะคำในหน้าต่าง → คัดลอกลงคลิปบอร์ด", 4483362458, Color3.fromRGB(255, 220, 100))
+CopyTab:CreateLabel("แล้วไปวางเองในช่องที่ต้องการ", 4483362458, Color3.fromRGB(255, 220, 100))
+
+CopyTab:CreateToggle({
+	Name = "เปิด/ปิด ระบบคัดลอก",
+	CurrentValue = true,
+	Flag = "ClipboardToggle",
+	Callback = function(value)
+		Clipboard.Enabled = value
+		Rayfield:Notify({
+			Title = value and "📋 เปิด" or "ปิด",
+			Content = value and "แตะคำ = คัดลอกทันที" or "ปิดการคัดลอก",
+			Duration = 2
+		})
+	end,
+})
+
+CopyTab:CreateToggle({
+	Name = "แสดง Toast แจ้งเตือน",
+	CurrentValue = true,
+	Flag = "ToastToggle",
+	Callback = function(value) Clipboard.ShowToast = value end,
+})
+
+CopyTab:CreateSlider({
+	Name = "ระยะเวลา Toast (วินาที)",
+	Range = {0.5, 5}, Increment = 0.1, Suffix = " วิ",
+	CurrentValue = 1.5, Flag = "ToastDuration",
+	Callback = function(value) Clipboard.ToastDuration = value end,
+})
+
+CopyTab:CreateSection("ตัวเลือกขั้นสูง")
+CopyTab:CreateToggle({
+	Name = "ล้างคลิปบอร์ดอัตโนมัติ",
+	CurrentValue = false, Flag = "AutoClear",
+	Callback = function(value) Clipboard.AutoClear = value end,
+})
+CopyTab:CreateSlider({
+	Name = "ล้างหลัง (วินาที)",
+	Range = {5, 120}, Increment = 5, Suffix = " วิ",
+	CurrentValue = 30, Flag = "ClearAfter",
+	Callback = function(value) Clipboard.ClearAfter = value end,
+})
+
+CopyTab:CreateSection("ทดสอบ")
+CopyTab:CreateInput({
+	Name = "ข้อความทดสอบ",
+	CurrentValue = "ทดสอบคัดลอก",
+	PlaceholderText = "ข้อความ...",
+	RemoveTextAfterFocusLost = false,
+	Flag = "TestText",
+	Callback = function(text)
+		if text and text ~= "" then Clipboard.TestText = text end
+	end,
+})
+
+CopyTab:CreateButton({
+	Name = "📋 ทดสอบคัดลอก",
+	Callback = function()
+		local t = Clipboard.TestText or "ทดสอบคัดลอก"
+		local ok, err = copyToClipboard(t)
+		if ok then
+			showToast(t)
+			Rayfield:Notify({ Title = "✅ คัดลอกแล้ว", Content = t, Duration = 2 })
+		else
+			Rayfield:Notify({ Title = "❌ ไม่สำเร็จ", Content = tostring(err), Duration = 3 })
+		end
+	end,
+})
+
+CopyTab:CreateButton({
+	Name = "🧹 ล้างคลิปบอร์ด",
+	Callback = function()
+		copyToClipboard("")
+		Rayfield:Notify({ Title = "🧹 ล้างแล้ว", Content = "คลิปบอร์ดว่างเปล่า", Duration = 1.5 })
+	end,
+})
+
+-- ==================== TAB วิธีใช้ ====================
+InfoTab:CreateSection("📱 วิธีใช้งาน")
+InfoTab:CreateLabel("1. แตะปุ่ม 'ก' มุมขวาบน → เปิดหน้าต่าง", 4483362458)
+InfoTab:CreateLabel("2. พิมพ์ค้นหาหรือแตะตัวอักษร (สูงสุด 3 ตัว)", 4483362458)
+InfoTab:CreateLabel("3. แตะคำที่ต้องการ → คัดลอกลงคลิปบอร์ด", 4483362458, Color3.fromRGB(95, 207, 159))
+InfoTab:CreateLabel("4. กด '✕' หรือปุ่ม 'ก' เพื่อปิดหน้าต่าง", 4483362458)
+InfoTab:CreateLabel("5. ไปที่ช่องในเกม → กดวาง (paste)", 4483362458, Color3.fromRGB(95, 207, 159))
+
+InfoTab:CreateSection("📊 สถิติคลังคำ")
+InfoTab:CreateLabel("📚 คำทั้งหมด: " .. #WORDS, 4483362458, Color3.fromRGB(95, 207, 159))
+InfoTab:CreateLabel("🗑️ คำซ้ำที่กรอง: " .. dupCount, 4483362458, Color3.fromRGB(180, 180, 180))
+InfoTab:CreateLabel("🆕 ชุด 1 (เดิม): " .. perSource.OLD .. " คำ", 4483362458)
+InfoTab:CreateLabel("🆕 ชุด 2: " .. perSource.NEW .. " คำ", 4483362458)
+InfoTab:CreateLabel("🆕 ชุด 3 (ใหม่): " .. perSource.NEW2 .. " คำ", 4483362458)
+
+-- ==================== แจ้งเตือน ====================
+Rayfield:Notify({
+	Title = "โหลดสำเร็จ",
+	Content = "รวม " .. #WORDS .. " คำ (ลบซ้ำ " .. dupCount .. ")",
+	Duration = 3
+})
