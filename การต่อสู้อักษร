@@ -1,5 +1,10 @@
--- ==================== 🛡️ Guard ป้องกันรันซ้ำ ====================
+-- ============================================================
+-- [DEBUG] STEP 0: เริ่มต้น
+-- ============================================================
+print("=== [DEBUG] STEP 0: เริ่มสคริปต์ ===")
+
 if getgenv().ThaiLettersLoaded then
+    print("[DEBUG] พบสคริปต์เก่า → ลบ GUI เก่า")
     local pg = game:GetService("Players").LocalPlayer:FindFirstChild("PlayerGui")
     if pg then
         for _, name in ipairs({"ThaiLettersGui", "CopyToast"}) do
@@ -10,7 +15,15 @@ if getgenv().ThaiLettersLoaded then
 end
 getgenv().ThaiLettersLoaded = true
 
-local Rayfield = loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
+print("[DEBUG] STEP 1: กำลังโหลด Rayfield...")
+local okLoad, Rayfield = pcall(function()
+    return loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
+end)
+if not okLoad then
+    warn("[DEBUG] ❌ โหลด Rayfield ไม่สำเร็จ:", Rayfield)
+    return
+end
+print("[DEBUG] ✅ Rayfield โหลดสำเร็จ")
 
 local Players = game:GetService("Players")
 local LocalPlayer = Players.LocalPlayer
@@ -26,7 +39,9 @@ for _, c in ipairs({
 	"ส","ห","ฬ","อ","ฮ"}) do
 	table.insert(LETTERS, c)
 end
+print("[DEBUG] ✅ LETTERS:", #LETTERS, "ตัว")
 
+print("[DEBUG] STEP 2: กำลังโหลดคลังคำชุด 1...")
 local WORDS_OLD = [[
 ไก่ กระต่าย กุ้ง ควาย ช้าง งู จิ้งจก จระเข้ ฉลาม ปลา ปู ผีเสื้อ ผึ้ง ม้า แมว มังกร ยีราฟ ลิง เสือ สุนัข หมู หมา หอย หนอน วัว นก นกฮูก กระรอก กวาง กระทิง แกะ แพะ ลา อูฐ หมี หมาป่า สิงโต แรด ค้างคาว เต่า กบ ปลาไหล ปลาหมึก ปลาโลมา วาฬ แมงมุม ยุง มด ตั๊กแตน เป็ด ห่าน เหยี่ยว อินทรี
 กล้วย มะม่วง ทุเรียน ส้ม มะนาว มะพร้าว องุ่น แตงโม แตงกวา ฝรั่ง ชมพู่ ลำไย ลิ้นจี่ เงาะ มังคุด ขนุน สับปะรด มะละกอ ส้มโอ ทับทิม พุทรา มะขาม ละมุด ฟักทอง มะเขือเทศ ผักบุ้ง ผักกาด แครอท หัวหอม กระเทียม พริก ขิง ข่า ตะไคร้ ใบเตย กะเพรา เห็ด ข้าวโพด มันฝรั่ง เผือก ข้าว ก๋วยเตี๋ยว ส้มตำ ต้มยำ ผัดไทย ขนมจีน ข้าวมันไก่ น้ำพริก ไข่เจียว ไข่ต้ม หมูทอด ไก่ย่าง ขนมปัง เค้ก เนย นมสด ไอศกรีม ช็อกโกแลต กาแฟ ชา น้ำผึ้ง
@@ -43,7 +58,11 @@ local WORDS_OLD = [[
 ฟุตบอล บาสเกตบอล วอลเลย์บอล แบดมินตัน เทนนิส มวยไทย ตะกร้อ มาราธอน ปิงปอง กอล์ฟ ดนตรี เพลง กีตาร์ เปียโน ไวโอลิน กลอง ขลุ่ย ระนาด ฉิ่ง ฉาบ ซออู้ จะเข้ ละคร ภาพยนตร์ ภาพวาด ภาพถ่าย ประติมากรรม การ์ตูน นิทาน นิยาย บทกวี กวี หนังสือพิมพ์ นิตยสาร ของเล่น ตุ๊กตา ลูกโป่ง ว่าว ลูกบอล เกม ปริศนา กีฬา นาฬิกา ฮีโร่ ฮิปโป ฮัลโหล ฮา นกฮูก ศิลปิน ภาพเขียน ลายเส้น สีน้ำ สีน้ำมัน พู่กัน กระดาษ หมากรุก ไพ่ ลูกเต๋า กระโดดเชือก ว่ายน้ำ ปีนเขา ตกปลา ล่องเรือ ขี่ม้า ขี่จักรยาน สเก็ต โยคะ
 คอมพิวเตอร์ อินเทอร์เน็ต โปรแกรม ข้อมูล แป้นพิมพ์ เมาส์ จอภาพ เครื่องพิมพ์ กล้อง วิดีโอ เครื่องคิดเลข หุ่นยนต์ ดาวเทียม กล้องโทรทรรศน์ ดาวเคราะห์ ดาวพฤหัสบดี ดาวอังคาร ดาวศุกร์ ดาวเสาร์ ดาวพุธ ดาวหาง ดาวตก ทางช้างเผือก จักรวาล ระบบสุริยะ อวกาศ นักบินอวกาศ ไฟฟ้า แบตเตอรี่ เครื่องยนต์ เครื่องจักร พลังงาน ฟิสิกส์ เคมี ชีววิทยา ไดโนเสาร์ ธาตุ อะตอม โมเลกุล แม่เหล็ก เลนส์ แว่นขยาย กล้องจุลทรรศน์ เทอร์โมมิเตอร์ ยา วัคซีน โรค หวัด ไข้ ปวดหัว หมอฟัน ปฐมพยาบาล ผ่าตัด สุขภาพ
 วิญญาณ เจริญ เชี่ยวชาญ อัญมณี ผู้ใหญ่ อนุญาต ภาษี ภาษา ภูมิศาสตร์ ภูมิอากาศ ภูมิปัญญา ภัย ภรรยา ภาค ภายใน ภายนอก ภาชนะ ภิกษุ ภัตตาคาร ภาระ เกษตร มนุษย์ พิเศษ วิเศษ รักษา ลักษณะ อักษร ยักษ์ พิษ วิทยาลัย วิทยุ วิทยาศาสตร์ วิชา วิธี วิเคราะห์ วิจารณ์ วิจัย วิ่ง มณฑล บัณฑิต คุณ คุณครู คุณธรรม กรุณา ประณีต ผู้เฒ่า วัฒนธรรม วุฒิ จุฬาลงกรณ์ สงกรานต์ พระอาทิตย์ พระจันทร์ พระเจ้า พระพุทธเจ้า พุทธศาสนา คริสต์ศาสนา อิสลาม ฮินดู ธรรม ธรรมะ ธูป เทียน ธง ธนู ธนบัตร ธิดา ธุระ ธัญพืช ธรณี ธารา
-]]local WORDS_NEW = [[
+]]
+print("[DEBUG] ✅ WORDS_OLD โหลดแล้ว")
+print("[DEBUG] STEP 3: กำลังโหลดคลังคำชุด 2 และ 3...")
+
+local WORDS_NEW = [[
 รถไฟ รถยนต์ รถเมล์ รถบัส รถตู้ รถถัง รถจักร รถเข็น รถพ่วง รถแข่ง
 บ้าน บ้านพัก บ้านสวน บ้านนา บ้านเช่า บ้านเลขที่ โรงเรียน โรงงาน โรงแรม โรงพยาบาล
 กระเป๋า กระจก กระดาษ กระดาน กระต่าย กระท่อม กระทะ กระบอก กระถาง กระดิ่ง
@@ -122,7 +141,9 @@ local WORDS_OLD = [[
 ความสะอาด ความปลอดภัย ความสามัคคี ความพยายาม ความสำเร็จ ความรับผิดชอบ ความอดทน ความเมตตา ความกตัญญู ความประหยัด
 มิตรภาพ ประสบการณ์ ประโยชน์ ประชาชน ประชาธิปไตย ธรรมชาติ สิ่งแวดล้อม ทรัพยากร พลังงาน เทคโนโลยี
 วิทยาศาสตร์ คณิตศาสตร์ ประวัติศาสตร์ ภูมิศาสตร์ เศรษฐศาสตร์ วัฒนธรรม ประเพณี ศาสนา การเกษตร การท่องเที่ยว
-]]local WORDS_NEW2 = [[
+]]
+
+local WORDS_NEW2 = [[
 รถไฟฟ้า รถจักรยาน รถจักรยานยนต์ รถพยาบาล รถดับเพลิง รถบรรทุก รถโดยสาร รถไฟใต้ดิน รถไฟความเร็วสูง รถเก็บขยะ
 เครื่องบินโดยสาร เครื่องบินรบ เฮลิคอปเตอร์ เรือดำน้ำ เรือประมง เรือโดยสาร เรือสำราญ เรือหางยาว
 โรงพยาบาล โรงเรียนอนุบาล โรงเรียนมัธยม โรงเรียนประถม โรงงานอุตสาหกรรม สถานีตำรวจ สถานีรถไฟ สถานีขนส่ง สถานีดับเพลิง
@@ -166,8 +187,8 @@ local WORDS_OLD = [[
 ผู้ประกอบการ ผู้โดยสาร ผู้บัญชาการ ผู้บังคับบัญชา ผู้พิพากษา ผู้ประกาศข่าว ผู้กำกับภาพยนตร์ ผู้ช่วยพยาบาล ผู้จัดการโรงงาน ผู้ดูแลระบบ ผู้ตรวจสอบ ผู้แทนจำหน่าย ผู้ประสานงาน ผู้ฝึกสอน ผู้เชี่ยวชาญ
 ข้าวเหนียวมะม่วง ข้าวผัดกุ้ง ข้าวผัดปู ข้าวมันไก่ ข้าวหมูแดง ข้าวขาหมู ข้าวผัด
 ]]
+print("[DEBUG] ✅ คลังคำชุด 2, 3 โหลดแล้ว")
 
--- ==================== รวม + ลบคำซ้ำทั้งหมด ====================
 local WORDS, seen = {}, {}
 local dupCount = 0
 local perSource = { OLD = 0, NEW = 0, NEW2 = 0 }
@@ -189,13 +210,10 @@ end
 addWords(WORDS_OLD, "OLD")
 addWords(WORDS_NEW, "NEW")
 addWords(WORDS_NEW2, "NEW2")
+print("[DEBUG] ✅ รวมคำ:", #WORDS, "คำ | ซ้ำ:", dupCount)
 
--- ==================== ฟังก์ชันค้นหา ====================
 local function search(picks)
-	if #picks == 0 then
-		return WORDS
-	end
-
+	if #picks == 0 then return WORDS end
 	local inOrder, anyOrder = {}, {}
 	for _, w in ipairs(WORDS) do
 		local ok, ordered = true, true
@@ -216,44 +234,33 @@ local function search(picks)
 	return inOrder
 end
 
--- ==================== ระบบคัดลอกคลิปบอร์ด ====================
 local Clipboard = {
-	Enabled = true,
-	ShowToast = true,
-	ToastDuration = 1.5,
-	AutoClear = false,
-	ClearAfter = 30,
-	TestText = "ทดสอบคัดลอก",
+	Enabled = true, ShowToast = true, ToastDuration = 1.5,
+	AutoClear = false, ClearAfter = 30, TestText = "ทดสอบคัดลอก",
 }
 
 local function copyToClipboard(text)
 	local ok, err = pcall(function()
-		if setclipboard then
-			setclipboard(text)
-		elseif toclipboard then
-			toclipboard(text)
-		elseif clipboard	error("Executor นี้ไม่มีฟังก์ชัน clipboard")
-		end
+		if setclipboard then setclipboard(text)
+		elseif toclipboard then toclipboard(text)
+		elseif writeclipboard then writeclipboard(text)
+		else error("Executor นี้ไม่มีฟังก์ชัน clipboard") end
 	end)
-	return ok, errboardclip
+	return ok, err
+end
+print("[DEBUG] ✅ STEP 3 เสร็จ — ค้นหา/Clipboard พร้อม")
+print("[DEBUG] STEP 4: สร้าง UI Helpers + Toast...")
+
 local C = {
-	bg = Color3.fromRGB(23, 42, 35),
-	panel = Color3.fromRGB(31, 56, 47),
-	btn = Color3.fromRGB(44, 74, 63),
-	on = Color3.fromRGB(31, 122, 92),
-	text = Color3.fromRGB(230, 243, 236),
-	accent = Color3.fromRGB(95, 207, 159),
-	close = Color3.fromRGB(180, 60, 60),
-	tab = Color3.fromRGB(70, 160, 120),
-	word = Color3.fromRGB(40, 90, 72),
-	wordHover = Color3.fromRGB(60, 140, 110),
-	copied = Color3.fromRGB(120, 200, 100),
-	toastBg = Color3.fromRGB(40, 90, 72),
+	bg = Color3.fromRGB(23, 42, 35), panel = Color3.fromRGB(31, 56, 47),
+	btn = Color3.fromRGB(44, 74, 63), on = Color3.fromRGB(31, 122, 92),
+	text = Color3.fromRGB(230, 243, 236), accent = Color3.fromRGB(95, 207, 159),
+	close = Color3.fromRGB(180, 60, 60), tab = Color3.fromRGB(70, 160, 120),
+	word = Color3.fromRGB(40, 90, 72), wordHover = Color3.fromRGB(60, 140, 110),
+	copied = Color3.fromRGB(120, 200, 100), toastBg = Color3.fromRGB(40, 90, 72),
 }
 
-local function corner(o, r)
-	Instance.new("UICorner", o).CornerRadius = UDim.new(0, r)
-end
+local function corner(o, r) Instance.new("UICorner", o).CornerRadius = UDim.new(0, r) end
 local function label(parent, props)
 	local l = Instance.new("TextLabel")
 	l.BackgroundTransparency = 1
@@ -264,7 +271,6 @@ local function label(parent, props)
 	return l
 end
 
--- ==================== 📱 Toast แจ้งเตือน ====================
 local toastGui = Instance.new("ScreenGui")
 toastGui.Name = "CopyToast"
 toastGui.ResetOnSpawn = false
@@ -287,45 +293,29 @@ toastStroke.Color = C.accent
 toastStroke.Thickness = 2
 toastStroke.Transparency = 1
 
-label(toast, {
-	Size = UDim2.fromOffset(40, 56),
-	Position = UDim2.fromOffset(8, 0),
-	Text = "✓", TextSize = 28, TextColor3 = C.accent, Font = Enum.Font.SourceSansBold,
-})
-
-label(toast, {
-	Size = UDim2.new(1, -60, 0, 26),
-	Position = UDim2.fromOffset(52, 6),
+label(toast, { Size = UDim2.fromOffset(40, 56), Position = UDim2.fromOffset(8, 0),
+	Text = "✓", TextSize = 28, TextColor3 = C.accent, Font = Enum.Font.SourceSansBold })
+label(toast, { Size = UDim2.new(1, -60, 0, 26), Position = UDim2.fromOffset(52, 6),
 	Text = "คัดลอกแล้ว", TextSize = 16, Font = Enum.Font.SourceSansBold,
-	TextXAlignment = Enum.TextXAlignment.Left,
-})
-
-local toastWord = label(toast, {
-	Size = UDim2.new(1, -60, 0, 22),
-	Position = UDim2.fromOffset(52, 28),
+	TextXAlignment = Enum.TextXAlignment.Left })
+local toastWord = label(toast, { Size = UDim2.new(1, -60, 0, 22), Position = UDim2.fromOffset(52, 28),
 	Text = "", TextSize = 14, TextColor3 = C.accent, TextTransparency = 0.2,
-	TextXAlignment = Enum.TextXAlignment.Left,
-})
+	TextXAlignment = Enum.TextXAlignment.Left })
 
 local toastTween, toastTask
-
 local function showToast(word)
 	if not Clipboard.ShowToast then return end
 	if toastTween then toastTween:Cancel() end
 	if toastTask then task.cancel(toastTask) end
-
 	toastWord.Text = word
 	toast.Visible = true
 	toast.BackgroundTransparency = 1
 	toastStroke.Transparency = 1
 	toast.Position = UDim2.new(0.5, 0, 1, 20)
-
-	toastTween = TweenService:Create(toast,
-		TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),
+	toastTween = TweenService:Create(toast, TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),
 		{ Position = UDim2.new(0.5, 0, 1, -30), BackgroundTransparency = 0.1 })
 	toastTween:Play()
 	TweenService:Create(toastStroke, TweenInfo.new(0.3), { Transparency = 0 }):Play()
-
 	toastTask = task.delay(Clipboard.ToastDuration, function()
 		local fadeOut = TweenService:Create(toast, TweenInfo.new(0.3),
 			{ Position = UDim2.new(0.5, 0, 1, 20), BackgroundTransparency = 1 })
@@ -334,7 +324,10 @@ local function showToast(word)
 		fadeOut.Completed:Connect(function() toast.Visible = false end)
 	end)
 end
--- ==================== 🪟 หน้าต่างหลัก ====================
+print("[DEBUG] ✅ Toast พร้อม")
+
+print("[DEBUG] STEP 5: สร้างหน้าต่างหลัก...")
+
 local gameGui = Instance.new("ScreenGui")
 gameGui.Name = "ThaiLettersGui"
 gameGui.ResetOnSpawn = false
@@ -342,7 +335,6 @@ gameGui.IgnoreGuiInset = true
 gameGui.DisplayOrder = 998
 gameGui.Parent = playerGui
 
--- ⭐ ปุ่มลอย "ก"
 local toggleBtn = Instance.new("TextButton")
 toggleBtn.Size = UDim2.fromOffset(56, 56)
 toggleBtn.Position = UDim2.new(1, -72, 0, 60)
@@ -385,13 +377,9 @@ headerFix.BackgroundColor3 = C.panel
 headerFix.BorderSizePixel = 0
 headerFix.Parent = header
 
-label(header, {
-	Size = UDim2.new(1, -90, 1, 0),
-	Position = UDim2.fromOffset(12, 0),
-	Text = "📋 แตะคำเพื่อคัดลอก",
-	TextSize = 17, Font = Enum.Font.SourceSansBold,
-	TextXAlignment = Enum.TextXAlignment.Left,
-})
+label(header, { Size = UDim2.new(1, -90, 1, 0), Position = UDim2.fromOffset(12, 0),
+	Text = "📋 แตะคำเพื่อคัดลอก", TextSize = 17, Font = Enum.Font.SourceSansBold,
+	TextXAlignment = Enum.TextXAlignment.Left })
 
 local closeBtn = Instance.new("TextButton")
 closeBtn.Size = UDim2.fromOffset(30, 30)
@@ -410,7 +398,6 @@ content.Position = UDim2.fromOffset(8, 44)
 content.BackgroundTransparency = 1
 content.Parent = main
 
--- ==================== ซ้าย: ช่องค้นหา + ตัวอักษร ====================
 local leftPanel = Instance.new("Frame")
 leftPanel.Size = UDim2.new(0, 240, 1, 0)
 leftPanel.BackgroundColor3 = C.panel
@@ -452,7 +439,6 @@ grid.CellSize = UDim2.fromOffset(40, 40)
 grid.CellPadding = UDim2.fromOffset(5, 5)
 grid.Parent = scroll
 
--- ==================== ขวา: ผลลัพธ์ (แคบลง) ====================
 local rightPanel = Instance.new("Frame")
 rightPanel.Size = UDim2.new(1, -248, 1, 0)
 rightPanel.Position = UDim2.fromOffset(248, 0)
@@ -467,13 +453,9 @@ pickedRow.Position = UDim2.fromOffset(6, 6)
 pickedRow.BackgroundTransparency = 1
 pickedRow.Parent = rightPanel
 
-local picked = label(pickedRow, {
-	Size = UDim2.new(1, -70, 1, 0),
-	Position = UDim2.fromOffset(4, 0),
-	Text = "-", TextSize = 26, TextColor3 = C.accent,
-	Font = Enum.Font.SourceSansBold,
-	TextXAlignment = Enum.TextXAlignment.Left,
-})
+local picked = label(pickedRow, { Size = UDim2.new(1, -70, 1, 0), Position = UDim2.fromOffset(4, 0),
+	Text = "-", TextSize = 26, TextColor3 = C.accent, Font = Enum.Font.SourceSansBold,
+	TextXAlignment = Enum.TextXAlignment.Left })
 
 local clear = Instance.new("TextButton")
 clear.Size = UDim2.fromOffset(64, 32)
@@ -486,13 +468,9 @@ clear.BackgroundColor3 = C.btn
 clear.Parent = pickedRow
 corner(clear, 8)
 
-local status = label(rightPanel, {
-	Size = UDim2.new(1, -12, 0, 20),
-	Position = UDim2.fromOffset(8, 48),
-	Text = "แตะตัวอักษรหรือพิมพ์ค้นหา",
-	TextSize = 13, TextTransparency = 0.3,
-	TextXAlignment = Enum.TextXAlignment.Left,
-})
+local status = label(rightPanel, { Size = UDim2.new(1, -12, 0, 20), Position = UDim2.fromOffset(8, 48),
+	Text = "แตะตัวอักษรหรือพิมพ์ค้นหา", TextSize = 13, TextTransparency = 0.3,
+	TextXAlignment = Enum.TextXAlignment.Left })
 
 local results = Instance.new("ScrollingFrame")
 results.Size = UDim2.new(1, -12, 1, -78)
@@ -507,8 +485,9 @@ results.Parent = rightPanel
 local list = Instance.new("UIListLayout")
 list.Padding = UDim.new(0, 5)
 list.Parent = results
+print("[DEBUG] ✅ UI หลักสร้างเสร็จ")
+print("[DEBUG] STEP 6: สร้างตรรกะค้นหา + ปุ่มคำ...")
 
--- ==================== ตรรกะ ====================
 local picks, buttons = {}, {}
 
 local function createWordButton(parent, word, order)
@@ -525,27 +504,17 @@ local function createWordButton(parent, word, order)
 	btn.TextTruncate = Enum.TextTruncate.AtEnd
 	btn.TextWrapped = false
 	corner(btn, 8)
-
 	local pad = Instance.new("UIPadding", btn)
 	pad.PaddingLeft = UDim.new(0, 10)
-
-	local copyIcon = label(btn, {
-		Size = UDim2.fromOffset(30, 34),
-		Position = UDim2.new(1, -34, 0, 0),
-		Text = "📋", TextSize = 18,
-		TextXAlignment = Enum.TextXAlignment.Center,
-		TextTransparency = 0.3,
-	})
-
+	local copyIcon = label(btn, { Size = UDim2.fromOffset(30, 34), Position = UDim2.new(1, -34, 0, 0),
+		Text = "📋", TextSize = 18, TextXAlignment = Enum.TextXAlignment.Center, TextTransparency = 0.3 })
 	btn.MouseEnter:Connect(function() btn.BackgroundColor3 = C.wordHover end)
 	btn.MouseLeave:Connect(function() btn.BackgroundColor3 = C.word end)
-
 	btn.Activated:Connect(function()
 		if not Clipboard.Enabled then
 			Rayfield:Notify({ Title = "⚠️ ปิดอยู่", Content = "เปิดระบบคัดลอกในแท็บก่อน", Duration = 2 })
 			return
 		end
-
 		local ok, err = copyToClipboard(word)
 		if ok then
 			showToast(word)
@@ -553,24 +522,20 @@ local function createWordButton(parent, word, order)
 			copyIcon.Text = "✓"
 			copyIcon.TextTransparency = 0
 			copyIcon.TextColor3 = Color3.fromRGB(255, 255, 255)
-
 			task.delay(0.6, function()
 				btn.BackgroundColor3 = C.word
 				copyIcon.Text = "📋"
 				copyIcon.TextTransparency = 0.3
 				copyIcon.TextColor3 = C.text
 			end)
-
 			status.Text = "✅ คัดลอกแล้ว — ไปวางเองในช่อง"
-
 			if Clipboard.AutoClear then
 				task.delay(Clipboard.ClearAfter, function() copyToClipboard("") end)
 			end
 		else
-			Rayfield:Notify({ Title = "❌ คัดลอกไม่สำเร็จ", Content = tostring(err or "Executor ไม่รองรับ clipboard"), Duration = 3 })
+			Rayfield:Notify({ Title = "❌ คัดลอกไม่สำเร็จ", Content = tostring(err), Duration = 3 })
 		end
 	end)
-
 	btn.Parent = parent
 	return btn
 end
@@ -579,55 +544,32 @@ local function refresh()
 	for _, ch in ipairs(results:GetChildren()) do
 		if ch:IsA("TextButton") then ch:Destroy() end
 	end
-
 	for letter, btn in pairs(buttons) do
 		btn.BackgroundColor3 = table.find(picks, letter) and C.on or C.btn
 	end
-
 	local query = string.lower(searchBox.Text)
-
 	if #picks == 0 and query == "" then
 		picked.Text = "-"
 		status.Text = "แตะตัวอักษรหรือพิมพ์ค้นหา"
 		return
 	end
-
-	if #picks > 0 then
-		picked.Text = table.concat(picks, " + ")
-	else
-		picked.Text = "🔍 " .. query
-	end
-
+	if #picks > 0 then picked.Text = table.concat(picks, " + ")
+	else picked.Text = "🔍 " .. query end
 	local found = search(picks)
-
 	if query ~= "" then
 		local filtered = {}
 		for _, w in ipairs(found) do
-			if string.find(string.lower(w), query, 1, true) then
-				table.insert(filtered, w)
-			end
+			if string.find(string.lower(w), query, 1, true) then table.insert(filtered, w) end
 		end
 		found = filtered
 	end
-
-	if #found > 0 then
-		status.Text = "พบ " .. #found .. " คำ (แตะเพื่อคัดลอก)"
-	else
-		status.Text = "ไม่พบคำ"
-	end
-
-	for i, w in ipairs(found) do
-		createWordButton(results, w, i)
-	end
+	if #found > 0 then status.Text = "พบ " .. #found .. " คำ (แตะเพื่อคัดลอก)"
+	else status.Text = "ไม่พบคำ" end
+	for i, w in ipairs(found) do createWordButton(results, w, i) end
 end
 
-searchBox:GetPropertyChangedSignal("Text"):Connect(function()
-	refresh()
-end)
-
-searchBox.FocusLost:Connect(function()
-	refresh()
-end)
+searchBox:GetPropertyChangedSignal("Text"):Connect(refresh)
+searchBox.FocusLost:Connect(refresh)
 
 for i, letter in ipairs(LETTERS) do
 	local btn = Instance.new("TextButton")
@@ -640,11 +582,9 @@ for i, letter in ipairs(LETTERS) do
 	btn.Parent = scroll
 	corner(btn, 8)
 	buttons[letter] = btn
-
 	btn.Activated:Connect(function()
 		local idx = table.find(picks, letter)
-		if idx then
-			table.remove(picks, idx)
+		if idx then table.remove(picks, idx)
 		else
 			if #picks >= MAX_PICK then table.remove(picks, 1) end
 			table.insert(picks, letter)
@@ -653,86 +593,66 @@ for i, letter in ipairs(LETTERS) do
 	end)
 end
 
-clear.Activated:Connect(function()
-	table.clear(picks)
-	refresh()
-end)
--- ==================== เปิด/ปิด + ลาก ====================
+clear.Activated:Connect(function() table.clear(picks); refresh() end)
+print("[DEBUG] ✅ ตรรกะค้นหาพร้อม")
+
+print("[DEBUG] STEP 7: สร้างการเปิด/ปิด + ลาก...")
+
 local function setVisible(v)
 	main.Visible = v
 	toggleBtn.Text = v and "✕" or "ก"
 	toggleBtn.BackgroundColor3 = v and C.close or C.accent
 	if v then refresh() end
 end
-
 closeBtn.Activated:Connect(function() setVisible(false) end)
 
 local toggleDragging, toggleMoved = false, false
 local tDragStart, tStartPos
-
 toggleBtn.InputBegan:Connect(function(input)
-	if input.UserInputType == Enum.UserInputType.MouseButton1
-		or input.UserInputType == Enum.UserInputType.Touch then
-		toggleDragging = true
-		toggleMoved = false
-		tDragStart = input.Position
-		tStartPos = toggleBtn.Position
+	if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+		toggleDragging = true; toggleMoved = false
+		tDragStart = input.Position; tStartPos = toggleBtn.Position
 	end
 end)
-
 toggleBtn.InputEnded:Connect(function(input)
-	if input.UserInputType == Enum.UserInputType.MouseButton1
-		or input.UserInputType == Enum.UserInputType.Touch then
+	if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
 		toggleDragging = false
-		if not toggleMoved then
-			setVisible(not main.Visible)
-		end
+		if not toggleMoved then setVisible(not main.Visible) end
 	end
 end)
-
 UserInputService.InputChanged:Connect(function(input)
-	if toggleDragging and (input.UserInputType == Enum.UserInputType.MouseMovement
-		or input.UserInputType == Enum.UserInputType.Touch) then
+	if toggleDragging and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
 		local delta = input.Position - tDragStart
-		if math.abs(delta.X) + math.abs(delta.Y) > 5 then
-			toggleMoved = true
-		end
+		if math.abs(delta.X) + math.abs(delta.Y) > 5 then toggleMoved = true end
 		if toggleMoved then
-			toggleBtn.Position = UDim2.new(
-				tStartPos.X.Scale, tStartPos.X.Offset + delta.X,
-				tStartPos.Y.Scale, tStartPos.Y.Offset + delta.Y
-			)
+			toggleBtn.Position = UDim2.new(tStartPos.X.Scale, tStartPos.X.Offset + delta.X,
+				tStartPos.Y.Scale, tStartPos.Y.Offset + delta.Y)
 		end
 	end
 end)
 
 local mDragging, mDragStart, mStartPos = false, nil, nil
 header.InputBegan:Connect(function(input)
-	if input.UserInputType == Enum.UserInputType.MouseButton1
-		or input.UserInputType == Enum.UserInputType.Touch then
-		mDragging = true
-		mDragStart = input.Position
-		mStartPos = main.Position
+	if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+		mDragging = true; mDragStart = input.Position; mStartPos = main.Position
 	end
 end)
 header.InputEnded:Connect(function(input)
-	if input.UserInputType == Enum.UserInputType.MouseButton1
-		or input.UserInputType == Enum.UserInputType.Touch then
+	if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
 		mDragging = false
 	end
 end)
 UserInputService.InputChanged:Connect(function(input)
-	if mDragging and (input.UserInputType == Enum.UserInputType.MouseMovement
-		or input.UserInputType == Enum.UserInputType.Touch) then
+	if mDragging and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
 		local delta = input.Position - mDragStart
-		main.Position = UDim2.new(
-			mStartPos.X.Scale, mStartPos.X.Offset + delta.X,
-			mStartPos.Y.Scale, mStartPos.Y.Offset + delta.Y
-		)
+		main.Position = UDim2.new(mStartPos.X.Scale, mStartPos.X.Offset + delta.X,
+			mStartPos.Y.Scale, mStartPos.Y.Offset + delta.Y)
 	end
 end)
+print("[DEBUG] ✅ เปิด/ปิด/ลาก พร้อม")
 
--- ==================== Rayfield Window ====================
+print("[DEBUG] STEP 8: สร้าง Rayfield Window...")
+
 local Window = Rayfield:CreateWindow({
 	Name = "Thai Letters",
 	LoadingTitle = "กำลังโหลด...",
@@ -740,6 +660,7 @@ local Window = Rayfield:CreateWindow({
 	ConfigurationSaving = { Enabled = false },
 	KeySystem = false
 })
+print("[DEBUG] ✅ Rayfield Window สร้างเสร็จ")
 
 local CopyTab = Window:CreateTab("📋 คัดลอก", 4483362458)
 local InfoTab = Window:CreateTab("วิธีใช้", 4483362458)
@@ -748,82 +669,43 @@ CopyTab:CreateSection("📋 ระบบคัดลอกคลิปบอร�
 CopyTab:CreateLabel("แตะคำในหน้าต่าง → คัดลอกลงคลิปบอร์ด", 4483362458, Color3.fromRGB(255, 220, 100))
 CopyTab:CreateLabel("แล้วไปวางเองในช่องที่ต้องการ", 4483362458, Color3.fromRGB(255, 220, 100))
 
-CopyTab:CreateToggle({
-	Name = "เปิด/ปิด ระบบคัดลอก",
-	CurrentValue = true,
-	Flag = "ClipboardToggle",
+CopyTab:CreateToggle({ Name = "เปิด/ปิด ระบบคัดลอก", CurrentValue = true, Flag = "ClipboardToggle",
 	Callback = function(value)
 		Clipboard.Enabled = value
-		Rayfield:Notify({
-			Title = value and "📋 เปิด" or "ปิด",
-			Content = value and "แตะคำ = คัดลอกทันที" or "ปิดการคัดลอก",
-			Duration = 2
-		})
-	end,
-})
-
-CopyTab:CreateToggle({
-	Name = "แสดง Toast แจ้งเตือน",
-	CurrentValue = true,
-	Flag = "ToastToggle",
-	Callback = function(value) Clipboard.ShowToast = value end,
-})
-
-CopyTab:CreateSlider({
-	Name = "ระยะเวลา Toast (วินาที)",
-	Range = {0.5, 5}, Increment = 0.1, Suffix = " วิ",
+		Rayfield:Notify({ Title = value and "📋 เปิด" or "ปิด",
+			Content = value and "แตะคำ = คัดลอกทันที" or "ปิดการคัดลอก", Duration = 2 })
+	end })
+CopyTab:CreateToggle({ Name = "แสดง Toast แจ้งเตือน", CurrentValue = true, Flag = "ToastToggle",
+	Callback = function(value) Clipboard.ShowToast = value end })
+CopyTab:CreateSlider({ Name = "ระยะเวลา Toast (วินาที)", Range = {0.5, 5}, Increment = 0.1, Suffix = " วิ",
 	CurrentValue = 1.5, Flag = "ToastDuration",
-	Callback = function(value) Clipboard.ToastDuration = value end,
-})
+	Callback = function(value) Clipboard.ToastDuration = value end })
 
 CopyTab:CreateSection("ตัวเลือกขั้นสูง")
-CopyTab:CreateToggle({
-	Name = "ล้างคลิปบอร์ดอัตโนมัติ",
-	CurrentValue = false, Flag = "AutoClear",
-	Callback = function(value) Clipboard.AutoClear = value end,
-})
-CopyTab:CreateSlider({
-	Name = "ล้างหลัง (วินาที)",
-	Range = {5, 120}, Increment = 5, Suffix = " วิ",
+CopyTab:CreateToggle({ Name = "ล้างคลิปบอร์ดอัตโนมัติ", CurrentValue = false, Flag = "AutoClear",
+	Callback = function(value) Clipboard.AutoClear = value end })
+CopyTab:CreateSlider({ Name = "ล้างหลัง (วินาที)", Range = {5, 120}, Increment = 5, Suffix = " วิ",
 	CurrentValue = 30, Flag = "ClearAfter",
-	Callback = function(value) Clipboard.ClearAfter = value end,
-})
+	Callback = function(value) Clipboard.ClearAfter = value end })
 
 CopyTab:CreateSection("ทดสอบ")
-CopyTab:CreateInput({
-	Name = "ข้อความทดสอบ",
-	CurrentValue = "ทดสอบคัดลอก",
-	PlaceholderText = "ข้อความ...",
-	RemoveTextAfterFocusLost = false,
-	Flag = "TestText",
-	Callback = function(text)
-		if text and text ~= "" then Clipboard.TestText = text end
-	end,
-})
-
-CopyTab:CreateButton({
-	Name = "📋 ทดสอบคัดลอก",
+CopyTab:CreateInput({ Name = "ข้อความทดสอบ", CurrentValue = "ทดสอบคัดลอก", PlaceholderText = "ข้อความ...",
+	RemoveTextAfterFocusLost = false, Flag = "TestText",
+	Callback = function(text) if text and text ~= "" then Clipboard.TestText = text end end })
+CopyTab:CreateButton({ Name = "📋 ทดสอบคัดลอก",
 	Callback = function()
 		local t = Clipboard.TestText or "ทดสอบคัดลอก"
 		local ok, err = copyToClipboard(t)
-		if ok then
-			showToast(t)
+		if ok then showToast(t)
 			Rayfield:Notify({ Title = "✅ คัดลอกแล้ว", Content = t, Duration = 2 })
-		else
-			Rayfield:Notify({ Title = "❌ ไม่สำเร็จ", Content = tostring(err), Duration = 3 })
-		end
-	end,
-})
-
-CopyTab:CreateButton({
-	Name = "🧹 ล้างคลิปบอร์ด",
+		else Rayfield:Notify({ Title = "❌ ไม่สำเร็จ", Content = tostring(err), Duration = 3 }) end
+	end })
+CopyTab:CreateButton({ Name = "🧹 ล้างคลิปบอร์ด",
 	Callback = function()
 		copyToClipboard("")
 		Rayfield:Notify({ Title = "🧹 ล้างแล้ว", Content = "คลิปบอร์ดว่างเปล่า", Duration = 1.5 })
-	end,
-})
+	end })
 
--- ==================== TAB วิธีใช้ ====================
 InfoTab:CreateSection("📱 วิธีใช้งาน")
 InfoTab:CreateLabel("1. แตะปุ่ม 'ก' มุมขวาบน → เปิดหน้าต่าง", 4483362458)
 InfoTab:CreateLabel("2. พิมพ์ค้นหาหรือแตะตัวอักษร (สูงสุด 3 ตัว)", 4483362458)
@@ -834,13 +716,10 @@ InfoTab:CreateLabel("5. ไปที่ช่องในเกม → กดว
 InfoTab:CreateSection("📊 สถิติคลังคำ")
 InfoTab:CreateLabel("📚 คำทั้งหมด: " .. #WORDS, 4483362458, Color3.fromRGB(95, 207, 159))
 InfoTab:CreateLabel("🗑️ คำซ้ำที่กรอง: " .. dupCount, 4483362458, Color3.fromRGB(180, 180, 180))
-InfoTab:CreateLabel("🆕 ชุด 1 (เดิม): " .. perSource.OLD .. " คำ", 4483362458)
+InfoTab:CreateLabel("🆕 ชุด 1: " .. perSource.OLD .. " คำ", 4483362458)
 InfoTab:CreateLabel("🆕 ชุด 2: " .. perSource.NEW .. " คำ", 4483362458)
-InfoTab:CreateLabel("🆕 ชุด 3 (ใหม่): " .. perSource.NEW2 .. " คำ", 4483362458)
+InfoTab:CreateLabel("🆕 ชุด 3: " .. perSource.NEW2 .. " คำ", 4483362458)
 
--- ==================== แจ้งเตือน ====================
-Rayfield:Notify({
-	Title = "โหลดสำเร็จ",
-	Content = "รวม " .. #WORDS .. " คำ (ลบซ้ำ " .. dupCount .. ")",
-	Duration = 3
-})
+Rayfield:Notify({ Title = "โหลดสำเร็จ", Content = "รวม " .. #WORDS .. " คำ (ลบซ้ำ " .. dupCount .. ")", Duration = 3 })
+print("=== [DEBUG] ✅✅✅ สคริปต์โหลดสมบูรณ์ ===")
+print("[DEBUG] รวมคำ:", #WORDS, "| ซ้ำ:", dupCount)
